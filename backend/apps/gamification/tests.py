@@ -576,7 +576,10 @@ class GamificationApiTests(TestCase):
     def test_monthly_review_endpoint_filters_candidates_to_requested_month(self):
         now = timezone.now()
         start_of_month = now.date().replace(day=1)
-        in_scope_date = start_of_month + timedelta(days=2)
+        # The review window is capped at "today", so the in-scope fixture must
+        # not land in the future relative to `now` -- use `now` itself rather
+        # than an offset that can exceed today early in the month.
+        in_scope_date = now.date()
         out_of_scope_date = start_of_month - timedelta(days=2)
         in_scope_transaction = Transaction.objects.create(
             user=self.user,
