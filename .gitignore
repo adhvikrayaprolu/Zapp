@@ -1,0 +1,55 @@
+# Scratch / planning notes (see repo memory guidelines) — never commit
+.docs/
+
+# --- Environments & secrets ---
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.pem
+*.key
+
+# --- Python (backend) ---
+venv/
+.venv/
+.venv-plaid/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+*.sqlite3
+media/
+staticfiles/
+htmlcov/
+coverage/
+checkpoints/
+outputs/
+artifacts/
+wandb/
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# --- Node / frontend ---
+node_modules/
+dist/
+build/
+private/
+*.log
+
+# --- Editors / OS ---
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+.cursorignore
+
+# --- Misc ---
+debug-*.ndjson
+*.pot
+exports/

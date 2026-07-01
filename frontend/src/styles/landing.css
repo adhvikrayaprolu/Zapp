@@ -1,0 +1,243 @@
+.zapp-landing-shell {
+  --z-canvas: #0b1220;
+  --z-fg: #f1f5f9;
+  --z-fg-muted: #94a3b8;
+  --z-surface: rgba(20, 28, 46, 0.55);
+  --z-surface-2: rgba(30, 41, 59, 0.45);
+  --z-border: rgba(255, 255, 255, 0.12);
+  --z-border-strong: rgba(255, 255, 255, 0.18);
+  --z-input-bg: rgba(15, 23, 42, 0.45);
+  --z-noise: rgba(255, 255, 255, 0.035);
+  min-height: 100dvh;
+  background-color: var(--z-canvas);
+  color: var(--z-fg);
+  font-family:
+    "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.zapp-landing-shell[data-theme="light"] {
+  --z-canvas: #eef4fb;
+  --z-fg: #0f172a;
+  --z-fg-muted: #475569;
+  --z-surface: rgba(255, 255, 255, 0.72);
+  --z-surface-2: rgba(255, 255, 255, 0.9);
+  --z-border: rgba(15, 23, 42, 0.1);
+  --z-border-strong: rgba(15, 23, 42, 0.14);
+  --z-input-bg: rgba(255, 255, 255, 0.85);
+  --z-noise: rgba(15, 23, 42, 0.04);
+}
+
+.zapp-landing-shell .zapp-glass {
+  background: linear-gradient(
+    145deg,
+    color-mix(in oklab, var(--z-surface) 88%, transparent),
+    color-mix(in oklab, var(--z-surface-2) 76%, transparent)
+  );
+  border: 1px solid var(--z-border);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.zapp-landing-shell .zapp-glow {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, white 8%, transparent),
+    0 24px 80px -24px rgba(34, 211, 238, 0.25),
+    0 12px 40px -20px rgba(168, 85, 247, 0.2);
+}
+
+.zapp-landing-shell .zapp-glow-subtle {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, white 6%, transparent),
+    0 18px 50px -28px rgba(56, 189, 248, 0.35);
+}
+
+.zapp-landing-shell .text-gradient-electric {
+  background: linear-gradient(115deg, #22d3ee, #4ade80, #60a5fa, #a78bfa, #2dd4bf, #facc15, #fb7185);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.zapp-landing-shell .zapp-nav-link {
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--z-fg-muted);
+  transition: color 0.3s ease;
+}
+
+.zapp-landing-shell .zapp-nav-link:hover {
+  color: var(--z-fg);
+}
+
+.zapp-landing-shell .zapp-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-image: linear-gradient(to right, #06b6d4, #0ea5e9, #8b5cf6);
+  padding: 0.875rem 2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: white;
+  box-shadow: 0 0 40px -8px rgba(34, 211, 238, 0.55);
+  transition: filter 0.2s ease;
+}
+
+.zapp-landing-shell .zapp-btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.zapp-landing-shell .zapp-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid var(--z-border-strong);
+  background: var(--z-surface);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--z-fg);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.zapp-landing-shell .zapp-btn-ghost:hover {
+  border-color: rgba(34, 211, 238, 0.4);
+  box-shadow: 0 0 32px -12px rgba(34, 211, 238, 0.45);
+}
+
+.zapp-landing-shell .zapp-link-secondary {
+  display: inline-flex;
+  flex: 1 1 0%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid var(--z-border);
+  background: var(--z-input-bg);
+  padding: 0.75rem 1rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--z-fg);
+  transition: border-color 0.2s ease;
+}
+
+.zapp-landing-shell .zapp-link-secondary:hover {
+  border-color: rgba(34, 211, 238, 0.4);
+}
+
+.zapp-landing-shell .zapp-label {
+  margin-bottom: 0.5rem;
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--z-fg-muted);
+}
+
+.zapp-landing-shell .zapp-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--z-border);
+  background: var(--z-input-bg);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--z-fg);
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.zapp-landing-shell .zapp-input::placeholder {
+  color: rgba(100, 116, 139, 0.8);
+}
+
+.zapp-landing-shell .zapp-input:focus {
+  border-color: rgba(34, 211, 238, 0.5);
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+}
+
+.zapp-landing-shell .zapp-submit {
+  border-radius: 9999px;
+  background-image: linear-gradient(to right, #4ade80, #06b6d4, #2563eb);
+  padding: 1rem 2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: rgb(15 23 42);
+  box-shadow: 0 0 40px -10px rgba(52, 211, 153, 0.55);
+  transition: filter 0.2s ease;
+}
+
+.zapp-landing-shell .zapp-submit:hover {
+  filter: brightness(1.08);
+}
+
+@keyframes zapp-aurora {
+  0% {
+    transform: translate3d(-8%, -4%, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(6%, 8%, 0) rotate(8deg) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-8%, -4%, 0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes zapp-aurora-2 {
+  0% {
+    transform: translate3d(10%, 6%, 0) rotate(0deg) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-10%, -8%, 0) rotate(-6deg) scale(1);
+  }
+  100% {
+    transform: translate3d(10%, 6%, 0) rotate(0deg) scale(1.05);
+  }
+}
+
+@keyframes zapp-grid-move {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 48px 48px;
+  }
+}
+
+.zapp-landing-shell .animate-zapp-aurora {
+  animation: zapp-aurora 22s ease-in-out infinite;
+}
+
+.zapp-landing-shell .animate-zapp-aurora-2 {
+  animation: zapp-aurora-2 28s ease-in-out infinite;
+}
+
+.zapp-landing-shell .animate-zapp-grid {
+  animation: zapp-grid-move 48s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zapp-landing-shell .animate-zapp-aurora,
+  .zapp-landing-shell .animate-zapp-aurora-2,
+  .zapp-landing-shell .animate-zapp-grid {
+    animation: none;
+  }
+}

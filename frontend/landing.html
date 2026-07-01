@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zapp Waitlist</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-primary: #0b1220;
+        --surface: rgba(16, 26, 46, 0.92);
+        --surface-strong: rgba(11, 18, 32, 0.96);
+        --text-primary: #f8fbff;
+        --text-muted: #9aa8bf;
+        --border-soft: rgba(255, 255, 255, 0.08);
+        --cyan: #22f0ff;
+        --blue: #3b82ff;
+        --purple: #b47cff;
+        --red: #ff7b7b;
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(59, 130, 255, 0.18), transparent 28%),
+          radial-gradient(circle at top right, rgba(34, 240, 255, 0.12), transparent 24%),
+          radial-gradient(circle at 50% 100%, rgba(180, 124, 255, 0.08), transparent 32%),
+          var(--bg-primary);
+        color: var(--text-primary);
+        font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+      }
+
+      .page {
+        width: min(1040px, calc(100% - 32px));
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 44px 0 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        text-align: center;
+      }
+
+      .brand {
+        display: grid;
+        gap: 10px;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: clamp(4rem, 10vw, 5.8rem);
+        line-height: 0.9;
+        letter-spacing: -0.1em;
+      }
+
+      .brand p {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: rgba(248, 251, 255, 0.62);
+      }
+
+      .hero-copy {
+        display: grid;
+        gap: 14px;
+      }
+
+      .hero-copy h2 {
+        margin: 0;
+        max-width: 860px;
+        font-size: clamp(2.8rem, 7vw, 5rem);
+        line-height: 0.98;
+        letter-spacing: -0.07em;
+      }
+
+      .hero-copy p {
+        margin: 0 auto;
+        max-width: 620px;
+        color: var(--text-muted);
+        font-size: clamp(1rem, 2.3vw, 1.15rem);
+        line-height: 1.7;
+      }
+
+      .card {
+        width: 100%;
+        border: 1px solid var(--border-soft);
+        border-radius: 28px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), var(--surface));
+        box-shadow: var(--shadow), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+      }
+
+      .form-card {
+        max-width: 470px;
+        padding: 18px;
+        text-align: left;
+      }
+
+      form {
+        display: grid;
+        gap: 14px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(248, 251, 255, 0.56);
+      }
+
+      input {
+        width: 100%;
+        height: 44px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        padding: 0 16px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text-primary);
+        font: inherit;
+      }
+
+      input::placeholder {
+        color: #6e7c95;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: rgba(34, 240, 255, 0.46);
+        box-shadow: 0 0 0 4px rgba(34, 240, 255, 0.12);
+      }
+
+      button {
+        appearance: none;
+        border: 0;
+        border-radius: 18px;
+        height: 44px;
+        background: var(--cyan);
+        color: #08121f;
+        font: inherit;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        box-shadow: 0 12px 28px rgba(34, 240, 255, 0.22);
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 34px rgba(34, 240, 255, 0.28);
+      }
+
+      button:disabled {
+        opacity: 0.75;
+        cursor: wait;
+        transform: none;
+      }
+
+      .status {
+        min-height: 1.3rem;
+        font-size: 0.92rem;
+      }
+
+      .demo-card {
+        max-width: 760px;
+        padding: 22px;
+        text-align: left;
+      }
+
+      .section-label {
+        margin: 0;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(248, 251, 255, 0.58);
+      }
+
+      .demo-card h3 {
+        margin: 6px 0 0;
+        font-size: 1.55rem;
+        letter-spacing: -0.04em;
+      }
+
+      .demo-grid {
+        margin-top: 18px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .panel {
+        border-radius: 24px;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .ask-panel {
+        background: var(--surface-strong);
+      }
+
+      .score-panel {
+        border-color: rgba(255, 123, 123, 0.18);
+        background: linear-gradient(180deg, rgba(255, 123, 123, 0.1), rgba(11, 18, 32, 0.92));
+      }
+
+      .ask-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .camera {
+        width: 44px;
+        height: 44px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(59, 130, 255, 0.12);
+        color: var(--blue);
+        font-size: 19px;
+      }
+
+      .upload-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        border-radius: 999px;
+        padding: 8px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.03);
+        color: rgba(248, 251, 255, 0.76);
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .score-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .score-top h4 {
+        margin: 6px 0 0;
+        font-size: 1.1rem;
+        letter-spacing: -0.03em;
+      }
+
+      .score-badge {
+        border-radius: 999px;
+        padding: 9px 12px;
+        border: 1px solid rgba(255, 123, 123, 0.18);
+        background: rgba(255, 123, 123, 0.12);
+        color: var(--red);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .score-row {
+        display: flex;
+        align-items: end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .score-number {
+        font-size: 4rem;
+        font-weight: 700;
+        line-height: 0.95;
+        letter-spacing: -0.08em;
+      }
+
+      .feature-grid {
+        width: 100%;
+        max-width: 960px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .feature-card {
+        min-height: 150px;
+        padding: 20px;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(16, 26, 46, 0.9));
+      }
+
+      .feature-card h4 {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(248, 251, 255, 0.62);
+      }
+
+      .feature-card p {
+        margin: 0;
+        max-width: 18rem;
+        color: rgba(248, 251, 255, 0.84);
+        line-height: 1.7;
+      }
+
+      footer {
+        color: rgba(248, 251, 255, 0.9);
+        font-size: 0.98rem;
+      }
+
+      footer p {
+        margin: 0;
+      }
+
+      footer p + p {
+        margin-top: 4px;
+      }
+
+      footer strong {
+        color: white;
+      }
+
+      @media (min-width: 860px) {
+        .demo-grid {
+          grid-template-columns: 1.02fr 0.98fr;
+        }
+
+        .feature-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="brand">
+        <h1>Zapp</h1>
+        <p>Waitlist Open</p>
+      </section>
+
+      <section class="hero-copy">
+        <h2>
+          We don’t waste money.
+          <br />
+          We misjudge value.
+        </h2>
+        <p>
+          Zapp helps you judge whether something is actually worth buying before you spend.
+        </p>
+      </section>
+
+      <section class="card form-card">
+        <form id="waitlist-form">
+          <label>
+            Name
+            <input name="name" type="text" placeholder="Enter your name" required />
+          </label>
+          <label>
+            Email
+            <input name="email" type="email" placeholder="Enter your email" required />
+          </label>
+          <button type="submit">Join the Waitlist</button>
+          <div class="status" id="status" aria-live="polite"></div>
+        </form>
+      </section>
+
+      <section class="card demo-card">
+        <p class="section-label">Product Demo</p>
+        <h3>Check before you buy.</h3>
+
+        <div class="demo-grid">
+          <div class="panel ask-panel">
+            <div class="ask-row">
+              <div class="camera">📷</div>
+              <div>
+                <p class="section-label">User Input</p>
+                <p style="margin: 6px 0 0; line-height: 1.7; color: rgba(248, 251, 255, 0.84)">
+                  Snap the item or ask Zapp if it’s worth it.
+                </p>
+                <div class="upload-pill">↗ Upload a product image</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel score-panel">
+            <div class="score-top">
+              <div>
+                <p class="section-label" style="color: var(--red)">Result</p>
+                <h4>Skip this purchase.</h4>
+              </div>
+              <div class="score-badge">Zapp Score</div>
+            </div>
+
+            <div class="score-row">
+              <div class="score-number">34</div>
+              <div style="padding-bottom: 6px; color: rgba(248, 251, 255, 0.68)">out of 100</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature-grid">
+        <article class="card feature-card">
+          <h4>ASK BEFORE YOU BUY</h4>
+          <p>Get a value score before you spend.</p>
+        </article>
+        <article class="card feature-card">
+          <h4>SNAP AND DECIDE</h4>
+          <p>Take a picture and let Zapp judge it.</p>
+        </article>
+        <article class="card feature-card">
+          <h4>KEEP IT SIMPLE</h4>
+          <p>Lower score = lower value. Higher score = better value.</p>
+        </article>
+      </section>
+
+      <footer>
+        <p>Zapp © 2026</p>
+        <p><strong>Contact:</strong> siddhantshankar@zappai.com</p>
+      </footer>
+    </main>
+
+    <script>
+      const form = document.getElementById("waitlist-form");
+      const statusEl = document.getElementById("status");
+      const apiBase =
+        window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
+          ? "http://127.0.0.1:8000"
+          : "";
+
+      function setStatus(message, color) {
+        statusEl.textContent = message;
+        statusEl.style.color = color;
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const button = form.querySelector("button[type='submit']");
+        const data = new FormData(form);
+        const payload = {
+          name: String(data.get("name") || "").trim(),
+          email: String(data.get("email") || "").trim(),
+          source: "landing_page",
+        };
+
+        if (!payload.name || !payload.email) {
+          setStatus("Please add your name and email.", "#ff9090");
+          return;
+        }
+
+        button.disabled = true;
+        button.textContent = "Joining...";
+        setStatus("", "#9df8ff");
+
+        try {
+          const response = await fetch(`${apiBase}/api/waitlist-signups/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const body = await response.json();
+
+          if (!response.ok) {
+            throw new Error(body?.detail || body?.email?.[0] || body?.name?.[0] || "Could not join waitlist.");
+          }
+
+          form.reset();
+          setStatus(body.created ? "You're on the waitlist." : "You're already on the waitlist.", "#9df8ff");
+        } catch (error) {
+          setStatus(error.message || "Something went wrong. Please try again.", "#ff9090");
+        } finally {
+          button.disabled = false;
+          button.textContent = "Join the Waitlist";
+        }
+      });
+    </script>
+  </body>
+</html>
