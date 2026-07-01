@@ -1,5 +1,5 @@
 import * as React from "react";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/shared/components/ui/utils";
 import { COLORS, GLOWS } from "@/shared/theme";
 import { getSurfaceAccentStyle, surfaceVariants } from "@/shared/components/system";
@@ -56,23 +56,3 @@ export const ElectricCard = ({
     </motion.div>
   );
 };
-
-export const ReflectionPulse = ({
-  active,
-  color = COLORS.electricGreen,
-}: {
-  active: boolean;
-  color?: string;
-}) => (
-  <AnimatePresence>
-    {active && (
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0.8 }}
-        animate={{ scale: 2.5, opacity: 0 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 pointer-events-none rounded-[2.5rem] border-4 z-10"
-        style={{ borderColor: color, boxShadow: `0 0 60px ${color}80` }}
-      />
-    )}
-  </AnimatePresence>
-);

@@ -6,9 +6,6 @@ import { registerBackendAuditSink } from "@/shared/audit/backendSink";
 import { AppErrorBoundary } from "@/shared/components/AppErrorBoundary";
 import "./styles/index.css";
 
-// console.log("ENV CHECK:", import.meta.env)
-// console.log("SUPABASE URL:", import.meta.env.VITE_SUPABASE_URL)
-
 registerBackendAuditSink();
 
 createRoot(document.getElementById("root")!).render(

@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 
 
 OPENAI_API_KEY_SETTING = "OPENAI_API_KEY"
@@ -27,20 +26,3 @@ def get_openai_api_key_issue(key: str | None = None) -> str | None:
         return "malformed_env_value"
 
     return None
-
-
-def require_openai_api_key() -> str:
-    """Return the OpenAI API key or raise a safe configuration error."""
-    key = get_openai_api_key()
-    issue = get_openai_api_key_issue(key)
-    if issue is None and key:
-        return key
-
-    if issue == "missing":
-        raise ImproperlyConfigured(
-            "OPENAI_API_KEY is not configured. Set it in the server environment before enabling OpenAI calls."
-        )
-
-    raise ImproperlyConfigured(
-        "OPENAI_API_KEY appears malformed. Check the server environment and ensure the value contains only the API key."
-    )

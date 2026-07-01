@@ -107,24 +107,3 @@ export function resetAuditSinks() {
   sinks.clear();
   sinks.add(defaultSink);
 }
-
-export function decodeJwtPayload(token: string | null): Record<string, unknown> | null {
-  if (!token) return null;
-  const [, payload] = token.split(".");
-  if (!payload) return null;
-
-  const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
-  try {
-    return JSON.parse(atob(padded)) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-export function getActorIdFromToken(token: string | null) {
-  const payload = decodeJwtPayload(token);
-  if (!payload) return null;
-  const subject = payload.sub;
-  return typeof subject === "string" || typeof subject === "number" ? subject : null;
-}

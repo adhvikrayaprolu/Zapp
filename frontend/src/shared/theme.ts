@@ -156,8 +156,6 @@ export function resolveAppTheme(mode: ThemeMode = "dark", overrides?: ThemeOverr
   return mergeTheme(baseTheme, overrides ?? getRuntimeThemeOverrides());
 }
 
-export const themeCssVars = buildThemeCssVars(APP_THEME);
-
 export function applyThemeVariables(target: HTMLElement = document.documentElement, theme: AppTheme = APP_THEME) {
   for (const [key, value] of Object.entries(buildThemeCssVars(theme))) {
     target.style.setProperty(key, value);

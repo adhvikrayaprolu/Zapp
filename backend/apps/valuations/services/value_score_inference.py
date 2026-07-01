@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from pathlib import Path
 
 from django.conf import settings
 
@@ -34,10 +33,6 @@ def get_value_score_model():
     if not getattr(settings, "VALUE_SCORE_ENABLED", True):
         raise ValueScoreModelNotAvailable("VALUE_SCORE_ENABLED is False.")
     return _load_model()
-
-
-def clear_value_score_model_cache() -> None:
-    _load_model.cache_clear()
 
 
 def predict_user_subscriptions(user_id: int, subscription_ids: list[int] | None = None):

@@ -919,14 +919,3 @@ def user_from_token_response(sb_response: dict[str, Any]) -> tuple[uuid.UUID, st
             error_code="email_not_confirmed",
         )
     return uid, email
-
-
-def ensure_session_user_matches_request(request) -> None:
-    """If session auth exists, ensure request.user aligns (after login)."""
-    state = get_session_auth_state(request)
-    if not state:
-        return
-    uid = state.get("user_id")
-    if uid and request.user.is_authenticated and request.user.pk != uid:
-        logger.warning("Session user_id mismatch with request.user; clearing session.")
-        clear_session(request)

@@ -58,13 +58,6 @@ export function validateProductionApiBaseUrl(raw: string | undefined): string | 
   return validateProductionHttpsUrl(raw, "VITE_API_URL");
 }
 
-/**
- * Validates Supabase URL for production builds. Returns error message if invalid.
- */
-export function validateProductionSupabaseUrl(raw: string | undefined): string | null {
-  return validateProductionHttpsUrl(raw, "VITE_SUPABASE_URL");
-}
-
 function resolveConfiguredUrl(
   raw: string | undefined,
   fallback: string,
@@ -95,16 +88,5 @@ export function resolveApiBaseUrl(): ConfiguredUrlValidation {
     import.meta.env.VITE_API_URL,
     "http://127.0.0.1:8000",
     validateProductionApiBaseUrl
-  );
-}
-
-/**
- * Resolves the Supabase URL for the current environment.
- */
-export function resolveSupabaseUrl(): ConfiguredUrlValidation {
-  return resolveConfiguredUrl(
-    import.meta.env.VITE_SUPABASE_URL,
-    "",
-    validateProductionSupabaseUrl
   );
 }

@@ -12,7 +12,6 @@ from apps.compliance.services import user_has_valid_financial_consent
 from apps.users.security_assurance import (
     MfaErrorCode,
     assess_mfa_for_banking,
-    extract_assurance_from_auth,
     banking_step_up_fresh,
 )
 

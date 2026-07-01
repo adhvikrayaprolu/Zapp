@@ -41,7 +41,6 @@ class FeedbackCandidatesTestCase(TestCase):
     def test_recency_score(self):
         """Recent dates score higher."""
         now = timezone.now()
-        today = now.date()
         assert _recency_score(now, now) == 1.0
         # 30 days ago should be lower
         from datetime import timedelta

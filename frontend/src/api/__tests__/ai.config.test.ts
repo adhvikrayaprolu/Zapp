@@ -11,7 +11,6 @@ type UrlResult = {
 function mockApiEnv(result: UrlResult) {
   vi.doMock("@/config/apiEnv", () => ({
     resolveApiBaseUrl: () => result,
-    resolveSupabaseUrl: () => ({ ok: true, url: "https://project.supabase.co" }),
     getValidatedUrlOrThrow: (value: UrlResult) => {
       if (!value.ok) {
         throw new Error(value.message);

@@ -23,10 +23,6 @@ export function useDashboardFeedback(): DashboardFeedbackContextValue {
   return ctx;
 }
 
-export function useDashboardFeedbackOptional(): DashboardFeedbackContextValue | null {
-  return React.useContext(DashboardFeedbackContext);
-}
-
 export function DashboardFeedbackProvider({ children }: { children: React.ReactNode }) {
   const [feedbackTransaction, setFeedbackTransaction] = React.useState<DisplayTransaction | null>(null);
   const [feedbackSource, setFeedbackSource] = React.useState<DashboardFeedbackSource | null>(null);

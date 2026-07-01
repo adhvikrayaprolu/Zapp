@@ -4,11 +4,6 @@ const auth = { requireAuth: true as const };
 
 export type ValuationJson = Record<string, unknown>;
 
-export type ValuationModelVersion = {
-  id: number;
-  [key: string]: unknown;
-};
-
 export type SubscriptionValuation = {
   id: number;
   subscription?: number;
@@ -34,35 +29,6 @@ export type ItemValuation = {
   evidence_json?: ValuationJson;
   reasoning_json?: ValuationJson;
   [key: string]: unknown;
-};
-
-export const ValuationModelVersionsAPI = {
-  list: () => apiRequest<ValuationModelVersion[]>("/api/valuation-model-versions/", auth),
-  get: (id: number) =>
-    apiRequest<ValuationModelVersion>(`/api/valuation-model-versions/${id}/`, auth),
-  create: (data: Partial<ValuationModelVersion>) =>
-    apiRequest<ValuationModelVersion>("/api/valuation-model-versions/", {
-      ...auth,
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-  update: (id: number, data: Partial<ValuationModelVersion>) =>
-    apiRequest<ValuationModelVersion>(`/api/valuation-model-versions/${id}/`, {
-      ...auth,
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
-  patch: (id: number, data: Partial<ValuationModelVersion>) =>
-    apiRequest<ValuationModelVersion>(`/api/valuation-model-versions/${id}/`, {
-      ...auth,
-      method: "PATCH",
-      body: JSON.stringify(data),
-    }),
-  remove: (id: number) =>
-    apiRequest<null>(`/api/valuation-model-versions/${id}/`, {
-      ...auth,
-      method: "DELETE",
-    }),
 };
 
 /** Value-score pipeline (platform_bundle model → SubscriptionValuation). */

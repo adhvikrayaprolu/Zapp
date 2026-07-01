@@ -1375,9 +1375,6 @@ class AIAuthenticationTests(TestCase):
     def tearDown(self):
         cache.clear()
 
-    def tearDown(self):
-        cache.clear()
-
     def test_ai_messages_endpoint_accepts_authenticated_user_without_dev_header(self):
         self.client.force_authenticate(user=self.user)
 

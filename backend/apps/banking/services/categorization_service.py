@@ -288,17 +288,6 @@ def classify_with_ml_fallback(
     return None
 
 
-def _infer_recurring_subscription(
-    transaction: BankTransaction,
-) -> tuple[str, str] | None:
-    """
-    Placeholder for future recurring/subscription inference.
-    Returns (zapp_primary, zapp_subcategory) if inferred as subscription, else None.
-    """
-    # TODO: Implement recurring charge detection, link to Subscription model
-    return None
-
-
 def categorize_bank_transaction(
     transaction: BankTransaction,
 ) -> dict[str, Any]:
@@ -382,13 +371,6 @@ def categorize_bank_transaction(
         "zapp_subcategory": "",
         "category_source": "fallback",
     }
-
-
-def resolve_effective_category(transaction: BankTransaction) -> str:
-    """
-    Centralized effective category resolution. Delegates to model property.
-    """
-    return transaction.effective_category
 
 
 def run_categorization_on_transaction(transaction: BankTransaction) -> None:

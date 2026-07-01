@@ -6,16 +6,11 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/shared/components/ui/sheet";
 import { cn } from "@/shared/components/ui/utils";
 
 function AppSheet(props: React.ComponentProps<typeof Sheet>) {
   return <Sheet {...props} />;
-}
-
-function AppSheetTrigger(props: React.ComponentProps<typeof SheetTrigger>) {
-  return <SheetTrigger {...props} />;
 }
 
 function AppSheetContent({
@@ -75,5 +70,4 @@ export {
   AppSheetFooter,
   AppSheetHeader,
   AppSheetTitle,
-  AppSheetTrigger,
 };

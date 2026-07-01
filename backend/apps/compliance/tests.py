@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
 from apps.compliance.monitoring import evaluate_security_alerts, load_security_detection_rules
-from apps.compliance.models import AuditEvent, ConsentType
+from apps.compliance.models import AuditEvent
 from apps.compliance.services import current_policy_version, record_financial_consent, user_has_valid_financial_consent
 
 User = get_user_model()

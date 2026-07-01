@@ -14,9 +14,10 @@ and waitlist capture.
 
 ```text
 web-app/
+  .github/    Shared CI/CD workflows and dependabot config for both services
   frontend/   React + TypeScript client (see frontend/README.md)
   backend/    Django REST API (see backend/README.md)
-  .docs/      Reference docs, notes, and in-progress plans — gitignored, not part of the shipped repo
+  .docs/      Reference docs, notes, presentation deck, and in-progress plans — gitignored, not part of the shipped repo
 ```
 
 ## Getting Started
@@ -54,6 +55,22 @@ All docs live under `.docs/`, which is gitignored (local-only, never committed):
 - `.docs/backend/` — backend security architecture, control map, encryption
   decisions, deployment verification, AI prompt spec, runbooks, and the DB
   audit/indexing plan.
+- `.docs/presentation/` — the team presentation deck (PDF/PPTX), moved out of
+  `frontend/public/` since it isn't an asset the running app serves.
+
+## CI/CD
+
+Workflows live in `.github/workflows/` at the repo root (GitHub only discovers
+workflows there, not in subdirectories):
+
+- `frontend-ci.yml` — runs on `frontend/**` changes: install, test, build.
+- `backend-ci.yml` — runs on `backend/**` changes: Django checks, migration
+  check, tests.
+- `backend-cd.yml` — deploys `backend/` on push to `main`, gated on a
+  `DEPLOY_WEBHOOK_URL` secret.
+
+`.github/dependabot.yml` covers npm (`/frontend`), pip (`/backend`), and the
+workflows themselves (`github-actions`).
 
 ## History Note
 

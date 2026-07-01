@@ -1,5 +1,4 @@
 from __future__ import annotations
-import uuid
 from django.contrib.auth.models import AbstractUser
 
 from django.conf import settings

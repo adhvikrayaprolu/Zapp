@@ -59,10 +59,6 @@ export default defineConfig(({ mode }) => {
               return 'react-vendor'
             }
 
-            if (id.includes('/@mui/') || id.includes('/@emotion/')) {
-              return 'mui-vendor'
-            }
-
             if (id.includes('/recharts/') || id.includes('/d3-')) {
               return 'charts-vendor'
             }
@@ -70,9 +66,7 @@ export default defineConfig(({ mode }) => {
             if (
               id.includes('/@radix-ui/') ||
               id.includes('/lucide-react/') ||
-              id.includes('/motion/') ||
-              id.includes('/embla-carousel-react/') ||
-              id.includes('/react-day-picker/')
+              id.includes('/motion/')
             ) {
               return 'ui-vendor'
             }

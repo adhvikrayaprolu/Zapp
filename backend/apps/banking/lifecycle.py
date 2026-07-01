@@ -49,9 +49,3 @@ def purge_user_bank_data(user) -> dict:
         "accounts_removed": account_count,
         "transactions_removed": txn_count,
     }
-
-
-def tombstone_connection(connection: BankConnection) -> None:
-    """Mark connection disconnected; caller may delete after retention window."""
-    connection.status = BankConnection.Status.DISCONNECTED
-    connection.save(update_fields=["status", "updated_at"])

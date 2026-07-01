@@ -6,16 +6,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/shared/components/ui/dialog";
 import { cn } from "@/shared/components/ui/utils";
 
 function AppDialog(props: React.ComponentProps<typeof Dialog>) {
   return <Dialog {...props} />;
-}
-
-function AppDialogTrigger(props: React.ComponentProps<typeof DialogTrigger>) {
-  return <DialogTrigger {...props} />;
 }
 
 function AppDialogContent({
@@ -70,5 +65,4 @@ export {
   AppDialogFooter,
   AppDialogHeader,
   AppDialogTitle,
-  AppDialogTrigger,
 };

@@ -27,13 +27,6 @@ export function PanelProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function usePanelContext() {
-  return {
-    ...React.useContext(PanelStateContext),
-    ...React.useContext(PanelActionsContext),
-  };
-}
-
 export function usePanelState() {
   return React.useContext(PanelStateContext);
 }
