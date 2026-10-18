@@ -2,6 +2,7 @@ from django.conf import settings
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
+from .permissions import IsFullyAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -45,6 +46,8 @@ def _resolve_next_steps(
 
 
 class UserRawExplicitViewSet(ModelViewSet):
+    # Onboarding answers stay reachable mid-MFA (part of the signup journey); derived
+    # profile, preferences and state below require a fully authenticated session.
     serializer_class = UserRawExplicitSerializer
     authentication_classes = [AuthSessionAuthentication]
     permission_classes = [IsAuthenticated]
@@ -67,7 +70,7 @@ class UserRawExplicitViewSet(ModelViewSet):
 class UserRawInferredViewSet(ReadOnlyModelViewSet):
     serializer_class = UserRawInferredSerializer
     authentication_classes = [AuthSessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def get_queryset(self):
         return UserRawInferred.objects.filter(user=self.request.user)
@@ -76,7 +79,7 @@ class UserRawInferredViewSet(ReadOnlyModelViewSet):
 class UserComputedViewSet(ReadOnlyModelViewSet):
     serializer_class = UserComputedSerializer
     authentication_classes = [AuthSessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def get_queryset(self):
         return UserComputed.objects.filter(user=self.request.user)
@@ -85,7 +88,7 @@ class UserComputedViewSet(ReadOnlyModelViewSet):
 class UserPreferenceViewSet(ModelViewSet):
     serializer_class = UserPreferenceSerializer
     authentication_classes = [AuthSessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def get_queryset(self):
         return UserPreference.objects.filter(user=self.request.user)
@@ -198,7 +201,7 @@ class SupabaseUserSyncView(APIView):
 
 class UserStateView(APIView):
     authentication_classes = [AuthSessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def get(self, request):
         recompute = request.query_params.get("recompute")

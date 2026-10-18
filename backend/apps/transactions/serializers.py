@@ -10,6 +10,10 @@ class TransactionSerializer(serializers.ModelSerializer):
     personal_value_score = serializers.IntegerField(read_only=True)
     value_score_confidence = serializers.FloatField(read_only=True)
     considered_at = serializers.DateTimeField(required=False, allow_null=True)
+    # Same documented scales and bounds as the bank-transaction feedback path.
+    satisfaction_rating = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=10)
+    regret_rating = serializers.IntegerField(required=False, allow_null=True, min_value=0, max_value=100)
+    repurchase_likelihood = serializers.IntegerField(required=False, allow_null=True, min_value=0, max_value=100)
 
     # These fields are derived by backend services and must not be written by
     # clients.  Clients that accidentally send them will have the values ignored.

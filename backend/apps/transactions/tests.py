@@ -594,3 +594,32 @@ class TransactionPaginationTestCase(TestCase):
         ids = {t["id"] for t in response.data["results"]}
         self.assertEqual(len(ids), 25)  # own rows only, capped to page size
         self.assertTrue(all(Transaction.objects.get(id=i).user == self.user for i in ids))
+
+
+class FeedbackRatingValidationTests(TestCase):
+    """Manual-transaction ratings are bounded like the bank feedback path (issue #10)."""
+
+    def setUp(self):
+        from rest_framework.test import APIClient
+
+        self.user = User.objects.create_user(username="rater", password="pw")
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+        self.tx = Transaction.objects.create(
+            user=self.user, direction="spend", amount=12, occurred_at=timezone.now(),
+            category=TransactionCategory.SHOPPING,
+        )
+
+    def patch(self, **fields):
+        return self.client.patch(f"/api/transactions/{self.tx.id}/", fields, format="json")
+
+    def test_out_of_range_ratings_are_rejected(self):
+        resp = self.patch(satisfaction_rating=11, regret_rating=-1, repurchase_likelihood=101)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(set(resp.json()), {"satisfaction_rating", "regret_rating", "repurchase_likelihood"})
+
+    def test_in_range_ratings_are_saved(self):
+        resp = self.patch(satisfaction_rating=7, regret_rating=20, repurchase_likelihood=80)
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.tx.refresh_from_db()
+        self.assertEqual(self.tx.satisfaction_rating, 7)
