@@ -179,7 +179,21 @@ export function OnboardingPage() {
     setStep((current) => current - 1);
   };
 
-  const handleSkip = () => navigate("/", { replace: true });
+  // Navigating alone looped back here: the dashboard gate sends users to /onboarding
+  // until a profile exists, so skipping saves an empty one.
+  const handleSkip = async () => {
+    setSubmitting(true);
+    try {
+      await OnboardingAPI.skip();
+      const session = await refreshSession();
+      toast.success("Skipped for now. You can add these details later in your profile.");
+      navigate(session.nextRoute, { replace: true });
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -389,7 +403,7 @@ export function OnboardingPage() {
               Set a baseline once. You can refine these preferences later.
             </p>
           </div>
-          <AppButton type="button" variant="quiet" size="sm" onClick={handleSkip}>
+          <AppButton type="button" variant="quiet" size="sm" onClick={handleSkip} disabled={submitting}>
             Skip for now
           </AppButton>
         </div>

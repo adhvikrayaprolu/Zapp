@@ -20,6 +20,18 @@ export const OnboardingAPI = {
     const data = await apiRequest<any[]>("/api/raw-explicit/", { requireAuth: true });
     return data.length > 0;
   },
+  /** "Skip for now": save an empty profile (no assumed answers) so onboarding is marked done. */
+  skip: () =>
+    apiRequest("/api/raw-explicit/", {
+      requireAuth: true,
+      method: "POST",
+      body: JSON.stringify({}),
+      audit: {
+        eventName: "account.onboarding_skip",
+        action: "create",
+        resourceType: "raw_explicit_profile",
+      },
+    }),
   submit: (payload: OnboardingData) =>
     apiRequest("/api/raw-explicit/", {
       requireAuth: true,
