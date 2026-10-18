@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { deriveTransactionValueScore } from "@/shared/transaction-valuation";
 
 describe("deriveTransactionValueScore", () => {
-  it("scales model value_score values by 1.5 and rounds", () => {
+  it("keeps 0-150 model value_score values on their own scale", () => {
     expect(
       deriveTransactionValueScore({
         value_score: 80,
@@ -11,7 +11,7 @@ describe("deriveTransactionValueScore", () => {
         impulse_score: null,
         regret_score: null,
       }),
-    ).toBe(120);
+    ).toBe(80);
   });
 
   it("uses personal_value_score when present on bank transactions", () => {
@@ -24,7 +24,7 @@ describe("deriveTransactionValueScore", () => {
         impulse_score: null,
         regret_score: null,
       }),
-    ).toBe(90);
+    ).toBe(60);
   });
 
   it("keeps fractional legacy scores on the 0-150 scale", () => {
