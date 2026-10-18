@@ -21,21 +21,31 @@ export function deriveTransactionValueScore(tx: TransactionValueScoreShape): num
     return normalizeModelValueScore(tx.feedback_value_score);
   }
 
-  const satisfaction =
-    typeof tx.satisfaction_rating === "number"
-      ? Math.max(0, Math.min(10, tx.satisfaction_rating)) / 10
-      : null;
-  const impulsePenalty =
-    typeof tx.impulse_score === "number"
-      ? Math.max(0, Math.min(1, tx.impulse_score)) * 0.35
-      : 0;
-  const regretPenalty =
-    typeof tx.regret_score === "number"
-      ? Math.max(0, Math.min(1, tx.regret_score)) * 0.45
-      : 0;
-
-  if (satisfaction == null && impulsePenalty === 0 && regretPenalty === 0) return null;
-
-  const baseline = satisfaction ?? 0.67;
-  return Math.max(0, Math.min(150, Math.round((baseline + 0.33 - impulsePenalty - regretPenalty) * 150)));
+  return estimateValueScoreFromRatings(tx.satisfaction_rating, tx.impulse_score, tx.regret_score);
 }
+
+/**
+ * Fallback 0-150 estimate when no model or feedback score exists, from the
+ * user's own ratings. Calibrated so 7/10 satisfaction lands just above the
+ * ~100 "match" line, 6/10 is on target, 5/10 is low value, and impulse/regret
+ * pull the score down. Mirrored server-side in
+ * backend/apps/valuations/services/purchase_check.py — keep them in sync.
+ */
+export function estimateValueScoreFromRatings(
+  satisfactionRating: number | null | undefined,
+  impulseScore: number | null | undefined,
+  regretScore: number | null | undefined,
+): number | null {
+  const satisfaction =
+    typeof satisfactionRating === "number" ? Math.max(0, Math.min(10, satisfactionRating)) / 10 : null;
+  const impulse = typeof impulseScore === "number" ? Math.max(0, Math.min(1, impulseScore)) : 0;
+  const regret = typeof regretScore === "number" ? Math.max(0, Math.min(1, regretScore)) : 0;
+
+  if (satisfaction == null && impulse === 0 && regret === 0) return null;
+
+  const baseline = satisfaction ?? NEUTRAL_SATISFACTION;
+  const score = 15 + baseline * 135 - impulse * 25 - regret * 35;
+  return Math.max(0, Math.min(150, Math.round(score)));
+}
+
+const NEUTRAL_SATISFACTION = 0.6;
