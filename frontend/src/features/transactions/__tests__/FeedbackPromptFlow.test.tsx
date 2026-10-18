@@ -1,5 +1,5 @@
 import { act, render, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useNavigate } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TransactionsAPI } from "@/api/transactions.api";
@@ -96,6 +96,62 @@ describe("FeedbackPromptFlow", () => {
     });
 
     expect(mockOpenFeedback).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not reopen a dismissed prompt when returning to /home (issue #48)", async () => {
+    let navigateTo: (path: string) => void = () => {};
+    function NavigateProbe() {
+      const navigate = useNavigate();
+      navigateTo = navigate;
+      return null;
+    }
+    render(
+      <MemoryRouter initialEntries={["/home"]}>
+        <NavigateProbe />
+        <FeedbackPromptFlow />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(mockOpenFeedback).toHaveBeenCalledTimes(1));
+
+    // Dismiss without answering, leave the dashboard, then come back.
+    const closeHandler = mockRegisterPromptCloseHandler.mock.calls.at(-1)?.[0] as () => void;
+    act(() => closeHandler());
+    act(() => navigateTo("/transactions"));
+    act(() => navigateTo("/home"));
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockOpenFeedback).toHaveBeenCalledTimes(1);
+  });
+
+  it("moves on to the next candidate after one is answered", async () => {
+    const second = { ...baseTransaction, id: 43, description_raw: "Headphones" };
+    mockUseMergedTransactions.mockReturnValue({
+      transactions: [baseTransaction, second],
+      loading: false,
+    });
+    vi.mocked(TransactionsAPI.getFeedbackCandidates).mockResolvedValue([
+      { transaction_id: 42 },
+      { transaction_id: 43 },
+    ] as never);
+
+    renderFlow();
+
+    await waitFor(() => expect(mockOpenFeedback).toHaveBeenCalledWith(baseTransaction, "prompt"));
+
+    const saved = mockRegisterPromptFeedbackSaved.mock.calls.at(-1)?.[0] as (id: number) => void;
+    const closeHandler = mockRegisterPromptCloseHandler.mock.calls.at(-1)?.[0] as () => void;
+    act(() => {
+      saved(42);
+      closeHandler();
+    });
+
+    await waitFor(() => expect(mockOpenFeedback).toHaveBeenLastCalledWith(second, "prompt"));
+    expect(mockOpenFeedback).toHaveBeenCalledTimes(2);
   });
 
   it("skips auto-prompting transactions that already have a reflection note", async () => {

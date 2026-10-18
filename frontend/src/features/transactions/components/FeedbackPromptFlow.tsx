@@ -41,7 +41,8 @@ function hasFeedback(tx: DisplayTransaction): boolean {
 function matchTransaction(
   candidates: FeedbackCandidate[],
   transactions: DisplayTransaction[],
-  answeredThisSession: Set<string | number>
+  answeredThisSession: Set<string | number>,
+  promptedThisSession: Set<string | number>
 ): DisplayTransaction[] {
   const byId = new Map<string | number, DisplayTransaction>();
   for (const tx of transactions) {
@@ -62,6 +63,7 @@ function matchTransaction(
     seen.add(tx.id);
     if (hasFeedback(tx)) continue;
     if (answeredThisSession.has(tx.id)) continue;
+    if (promptedThisSession.has(tx.id)) continue;
     queue.push(tx);
     if (queue.length >= MAX_PROMPTS_PER_SESSION) break;
   }
@@ -96,9 +98,22 @@ export function FeedbackPromptFlow() {
   const openedPromptForIndexRef = React.useRef<number | null>(null);
   /** After any prompt open in this tab session, allow follow-up prompts without re-checking daily storage. */
   const openedPromptInSessionRef = React.useRef(false);
+  /** Transactions already shown as a prompt this session; never re-queued (e.g. on returning to /home). */
+  const promptedThisSessionRef = React.useRef<Set<string | number>>(new Set());
+  /** Mirrors answeredThisSession synchronously so the close handler can tell "saved" from "dismissed". */
+  const answeredRef = React.useRef<Set<string | number>>(new Set());
+  /** Dismissing a prompt without answering ends auto-prompting for this session. */
+  const promptsStoppedRef = React.useRef(false);
 
   const advanceToNext = React.useCallback(() => {
     setCurrentIndex((i) => {
+      const closed = queue[i];
+      if (closed && !answeredRef.current.has(closed.id)) {
+        promptsStoppedRef.current = true;
+        setQueue([]);
+        openedPromptForIndexRef.current = null;
+        return 0;
+      }
       const next = i + 1;
       if (next >= queue.length) {
         setQueue([]);
@@ -108,7 +123,7 @@ export function FeedbackPromptFlow() {
       openedPromptForIndexRef.current = null;
       return next;
     });
-  }, [queue.length]);
+  }, [queue]);
 
   React.useEffect(() => {
     registerPromptCloseHandler(advanceToNext);
@@ -117,6 +132,7 @@ export function FeedbackPromptFlow() {
 
   React.useEffect(() => {
     registerPromptFeedbackSaved((transactionId) => {
+      answeredRef.current.add(transactionId);
       setAnsweredThisSession((prev) => new Set(prev).add(transactionId));
     });
     return () => registerPromptFeedbackSaved(null);
@@ -134,8 +150,8 @@ export function FeedbackPromptFlow() {
 
   React.useEffect(() => {
     if (!isOnHome || candidatesLoading || txLoading) return;
-    if (candidates.length === 0) return;
-    const q = matchTransaction(candidates, transactions, answeredThisSession);
+    if (candidates.length === 0 || promptsStoppedRef.current) return;
+    const q = matchTransaction(candidates, transactions, answeredThisSession, promptedThisSessionRef.current);
     setQueue(q);
     setCurrentIndex(0);
     openedPromptForIndexRef.current = null;
@@ -157,7 +173,7 @@ export function FeedbackPromptFlow() {
   React.useEffect(() => {
     if (!isOnHome || candidatesLoading || txLoading) return;
     if (user?.id == null) return;
-    if (feedbackTransaction) return;
+    if (feedbackTransaction || promptsStoppedRef.current) return;
     if (queue.length === 0 || currentIndex >= queue.length) return;
 
     const key = dailyPromptKey(user.id);
@@ -176,7 +192,7 @@ export function FeedbackPromptFlow() {
     if (openedPromptForIndexRef.current === currentIndex) return;
 
     const tx = queue[currentIndex];
-    if (!tx) return;
+    if (!tx || promptedThisSessionRef.current.has(tx.id)) return;
 
     openedPromptForIndexRef.current = currentIndex;
     if (!openedPromptInSessionRef.current) {
@@ -188,6 +204,7 @@ export function FeedbackPromptFlow() {
       }
     }
     openedPromptInSessionRef.current = true;
+    promptedThisSessionRef.current.add(tx.id);
 
     openFeedback(tx, "prompt");
     tryBrowserNotification(tx);
