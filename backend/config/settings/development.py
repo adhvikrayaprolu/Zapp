@@ -6,7 +6,7 @@ DEBUG = True
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 
-ALLOWED_HOSTS = ALLOWED_HOSTS or ["127.0.0.1"]
+ALLOWED_HOSTS = ALLOWED_HOSTS or ["127.0.0.1", "localhost"]
 
 # Banking: relaxed defaults for local dev. Set in .env to mirror production when testing Plaid:
 #   BANKING_REQUIRE_MFA=true
@@ -42,7 +42,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:4173",
     "http://127.0.0.1:5173",
     "http://localhost:4173",
-    "http://127.0.0.1:4173",
+    "http://localhost:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = list(CORS_ALLOWED_ORIGINS)
