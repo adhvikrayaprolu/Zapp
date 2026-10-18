@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { LoginPage, buildOAuthRedirectUriAfter } from "../pages/LoginPage";
 import { toast } from "sonner";
+import { DemoLoginAPI } from "@/api/users.api";
 
 const { mockNavigate, mockLogin, mockGetApiBaseUrl } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
@@ -43,6 +44,10 @@ vi.mock("@/api/client", async () => {
   };
 });
 
+vi.mock("@/api/users.api", () => ({
+  DemoLoginAPI: { status: vi.fn().mockResolvedValue({ enabled: false }) },
+}));
+
 vi.mock("@/shared/components/brand/AppLogo", () => ({
   AppLogo: () => <div data-testid="app-logo" />,
 }));
@@ -72,6 +77,25 @@ describe("LoginPage", () => {
     expect(buildOAuthRedirectUriAfter("https://api.example.com", { origin: "https://app.example.com" })).toBe(
       "https://app.example.com/auth/callback"
     );
+  });
+
+  it("offers the demo account only when the backend enables it", async () => {
+    vi.mocked(DemoLoginAPI.status).mockResolvedValueOnce({ enabled: true });
+    const { unmount } = render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>
+    );
+    expect(await screen.findByRole("button", { name: /try the demo account/i })).toBeInTheDocument();
+    unmount();
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(DemoLoginAPI.status).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("button", { name: /try the demo account/i })).not.toBeInTheDocument();
   });
 
   it("navigates to the route returned by login", async () => {

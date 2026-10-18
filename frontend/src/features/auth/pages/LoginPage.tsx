@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import { getApiBaseUrl } from "@/api/client";
+import { DemoLoginAPI } from "@/api/users.api";
 import { AppButton, AppInput, FormField, SectionHeader, Surface } from "@/shared/components/system";
 import { PrivacyPolicyLink } from "@/shared/components/PrivacyPolicyLink";
 import { AppLogo } from "@/shared/components/brand/AppLogo";
@@ -49,15 +50,24 @@ export function buildOAuthRedirectUriAfter(apiBaseUrl: string, locationLike: Pic
   return redirectUrl.toString();
 }
 
-/** Local demo login button; also requires DEMO_LOGIN_ENABLED + DEBUG on the backend. */
-const DEMO_LOGIN_ENABLED = import.meta.env.VITE_DEMO_LOGIN === "true";
-
 export function LoginPage() {
   const { login, loginAsDemo, isAuthenticated, isAuthReady, nextRoute } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+  const [demoAvailable, setDemoAvailable] = React.useState(false);
+
+  // The backend decides whether the demo account is offered (development only).
+  React.useEffect(() => {
+    let active = true;
+    DemoLoginAPI.status()
+      .then((res) => active && setDemoAvailable(res?.enabled === true))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   React.useEffect(() => {
     if (isAuthReady && isAuthenticated) navigate(nextRoute, { replace: true });
@@ -146,7 +156,7 @@ export function LoginPage() {
             className="mb-8"
           />
 
-            {DEMO_LOGIN_ENABLED && (
+            {demoAvailable && (
               <AppButton
                 type="button"
                 size="md"

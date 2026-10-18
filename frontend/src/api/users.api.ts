@@ -102,3 +102,8 @@ export const PreferencesAPI = {
   remove: (id: number) =>
     apiRequest<null>(`/api/preferences/${id}/`, { ...auth, method: "DELETE" }),
 };
+
+/** Local demo login. The backend only enables it in development (DEBUG + DEMO_LOGIN_ENABLED). */
+export const DemoLoginAPI = {
+  status: () => apiRequest<{ enabled: boolean }>("/api/auth/demo-login/"),
+};

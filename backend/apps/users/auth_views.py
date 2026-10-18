@@ -413,6 +413,22 @@ class CsrfView(APIView):
         return Response({"detail": "CSRF cookie set"})
 
 
+class SessionStatusView(APIView):
+    """
+    GET: public, cheap "am I signed in?" probe for app bootstrap.
+
+    Lets the frontend skip /api/auth/me/ (which rejects anonymous callers) when
+    there is no session, instead of triggering an error response on every
+    signed-out page load. Exposes nothing beyond a boolean.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = [AuthSessionAuthentication]
+
+    def get(self, request):
+        return Response({"authenticated": bool(request.user and request.user.is_authenticated)})
+
+
 class LoginView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle]

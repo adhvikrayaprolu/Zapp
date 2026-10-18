@@ -17,6 +17,7 @@ from .auth_views import (
     MfaVerifyEnrollmentView,
     OAuthCallbackView,
     OAuthStartView,
+    SessionStatusView,
     SignupView,
 )
 from .security_views import AuthAssuranceView
@@ -43,6 +44,7 @@ urlpatterns = [
     path("auth/signup/", SignupView.as_view(), name="auth-signup"),
     path("auth/logout/", LogoutView.as_view(), name="auth-logout"),
     path("auth/me/", MeView.as_view(), name="auth-me"),
+    path("auth/session/", SessionStatusView.as_view(), name="auth-session"),
     path("auth/oauth/start/", OAuthStartView.as_view(), name="auth-oauth-start"),
     path("auth/oauth/callback/", OAuthCallbackView.as_view(), name="auth-oauth-callback"),
     path("auth/email/confirm/", EmailConfirmCallbackView.as_view(), name="auth-email-confirm-callback"),

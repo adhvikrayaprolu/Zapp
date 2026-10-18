@@ -37,6 +37,12 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: '127.0.0.1',
+      // When VITE_API_URL is unset the app calls its own origin; forward API traffic
+      // to Django so the session cookie and CSRF token stay first-party.
+      proxy: {
+        '/api': env.VITE_DEV_API_PROXY || 'http://127.0.0.1:8000',
+        '/healthz': env.VITE_DEV_API_PROXY || 'http://127.0.0.1:8000',
+      },
     },
     preview: {
       host: '127.0.0.1',

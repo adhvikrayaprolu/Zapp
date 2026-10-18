@@ -62,3 +62,18 @@ class DemoLoginTests(TestCase):
     @override_settings(DEMO_LOGIN_ENABLED=False)
     def test_disabled_by_flag(self):
         self.assertEqual(self.client.post(DEMO_URL).status_code, 404)
+
+
+class SessionStatusTests(TestCase):
+    def test_anonymous_is_not_authenticated(self):
+        resp = APIClient().get("/api/auth/session/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json(), {"authenticated": False})
+
+    @override_settings(DEBUG=True, DEMO_LOGIN_ENABLED=True, DEMO_LOGIN_USERNAME="demo_user_0")
+    def test_signed_in_session_is_authenticated(self):
+        cache.clear()
+        User.objects.create_user(username="demo_user_0", email="demo@example.com", password=None)
+        client = APIClient()
+        client.post(DEMO_URL)
+        self.assertEqual(client.get("/api/auth/session/").json(), {"authenticated": True})
