@@ -20,6 +20,29 @@ web-app/
   .docs/      Reference docs, notes, presentation deck, and in-progress plans — gitignored, not part of the shipped repo
 ```
 
+## Quick Start (local demo)
+
+Requires Python 3.13 and Node 20+ (macOS/Linux shell).
+
+```bash
+./scripts/setup-local.sh   # venv, deps, local .env files, SQLite DB, demo account
+./scripts/dev.sh           # API on 127.0.0.1:8000 + app on 127.0.0.1:5173
+```
+
+Open http://127.0.0.1:5173/login and click **Try the demo account**. That signs
+in as `demo_user_0`, a seeded account with ~6 months of synthetic transactions,
+subscriptions and value scores. No Supabase, MFA, Plaid or OpenAI keys needed.
+
+- Reset the demo data at any time: `cd backend && .venv/bin/python manage.py seed_demo`
+- The demo login only works when Django runs with `DEBUG` on and
+  `DEMO_LOGIN_ENABLED` (default on in development, forced off in production).
+  The button only shows when the frontend has `VITE_DEMO_LOGIN=true`.
+- Not live without credentials: Plaid bank linking, Spotify, real sign-up/login
+  (Supabase), ZappBot LLM answers (OpenAI), and live value-score recomputation
+  (external `value_score_model` checkpoints; see `backend/.env.example`).
+- Brand images are expected in `frontend/private/` (Vite's publicDir), which is
+  gitignored, so fresh clones fall back to the text wordmark.
+
 ## Getting Started
 
 ### Frontend
@@ -66,8 +89,9 @@ workflows there, not in subdirectories):
 - `frontend-ci.yml` — runs on `frontend/**` changes: install, test, build.
 - `backend-ci.yml` — runs on `backend/**` changes: Django checks, migration
   check, tests.
-- `backend-cd.yml` — deploys `backend/` on push to `main`, gated on a
-  `DEPLOY_WEBHOOK_URL` secret.
+- `backend-cd.yml` — manual (`workflow_dispatch`) for now since nothing is
+  deployed; validates production settings, then calls the deploy webhook if a
+  `DEPLOY_WEBHOOK_URL` secret is set.
 
 `.github/dependabot.yml` covers npm (`/frontend`), pip (`/backend`), and the
 workflows themselves (`github-actions`).
