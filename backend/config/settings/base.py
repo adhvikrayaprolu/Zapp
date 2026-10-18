@@ -209,6 +209,11 @@ AUTH_REQUIRE_AAL2 = os.getenv("AUTH_REQUIRE_AAL2", "true").lower() in (
     "yes",
 )
 
+# Local demo login (POST /api/auth/demo-login/). Only honored when DEBUG is on;
+# production.py forces it off. Seed the account with `manage.py seed_demo`.
+DEMO_LOGIN_ENABLED = False
+DEMO_LOGIN_USERNAME = os.getenv("DEMO_LOGIN_USERNAME", "demo_user_0")
+
 # --- Banking step-up freshness (session-backed assurance) ---
 BANKING_STEP_UP_REQUIRED = os.getenv("BANKING_STEP_UP_REQUIRED", "true").lower() in (
     "1",

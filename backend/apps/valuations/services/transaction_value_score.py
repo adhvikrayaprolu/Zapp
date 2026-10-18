@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, time
 from decimal import Decimal
-import json
+import logging
 from typing import Any
 
 import pandas as pd
@@ -25,21 +25,19 @@ from .value_score_inference import ValueScoreModelNotAvailable, get_value_score_
 from .value_score_orchestrator import _get_or_create_model_version
 
 
+logger = logging.getLogger(__name__)
+
 TRANSACTION_MODEL_NAME = "value_score"
 
 
-def _print_transaction_model_payload(transaction: Transaction, data: dict[str, pd.DataFrame]) -> None:
-    print("")
-    print("=== TRANSACTION VALUE SCORE MODEL INPUT ===")
-    print(f"transaction_id={transaction.id} user_id={transaction.user_id} description={transaction.description_raw!r}")
-    for key, df in data.items():
-        print(f"-- {key} --")
-        if df.empty:
-            print("[]")
-            continue
-        print(json.dumps(df.to_dict(orient="records"), indent=2, default=str))
-    print("=== END TRANSACTION VALUE SCORE MODEL INPUT ===")
-    print("")
+def _log_transaction_model_payload(transaction: Transaction, data: dict[str, pd.DataFrame]) -> None:
+    # Model inputs hold decrypted financial/profile data: log only ids and shapes, never values.
+    logger.debug(
+        "transaction value score input transaction_id=%s user_id=%s rows=%s",
+        transaction.id,
+        transaction.user_id,
+        {key: len(df) for key, df in data.items()},
+    )
 
 
 def _merchant_category_from_transaction(category: str) -> str:
@@ -347,7 +345,7 @@ def build_transaction_value_score_dataframes(transaction: Transaction) -> tuple[
 def predict_transaction_value_score(transaction: Transaction) -> dict[str, Any]:
     model = get_value_score_model()
     data, transaction_id = build_transaction_value_score_dataframes(transaction)
-    _print_transaction_model_payload(transaction, data)
+    _log_transaction_model_payload(transaction, data)
     result_df = None
     predict_transactions = getattr(model, "predict_transactions", None)
     if callable(predict_transactions):

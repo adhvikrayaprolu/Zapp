@@ -40,7 +40,11 @@ node_modules/
 dist/
 build/
 !/frontend/build/
-private/
+# frontend/private is Vite's publicDir: commit brand images there, but not the
+# files the build regenerates into it (sitemap/robots, and .webp copies of rasters).
+/frontend/private/sitemap.xml
+/frontend/private/robots.txt
+/frontend/private/*.webp
 *.log
 
 # --- Editors / OS ---

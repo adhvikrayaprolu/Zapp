@@ -1,6 +1,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
+from .purchase_check_views import PurchaseCheckView
 from .value_score_views import (
     TransactionValuationListView,
     TransactionValuationRecomputeView,
@@ -22,6 +23,7 @@ router.register(r"item-valuations", ItemValuationViewSet, basename="item-valuati
 router.register(r"transaction-valuations", TransactionValuationViewSet, basename="transaction-valuations")
 
 urlpatterns = [
+    path("purchase-check/", PurchaseCheckView.as_view(), name="purchase-check"),
     path("value-scores/me/", ValueScoreMeView.as_view(), name="value-scores-me"),
     path("value-scores/recompute/", ValueScoreRecomputeView.as_view(), name="value-scores-recompute"),
     path("transaction-valuations/latest/", TransactionValuationListView.as_view(), name="transaction-valuations-latest"),

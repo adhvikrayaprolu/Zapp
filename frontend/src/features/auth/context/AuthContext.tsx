@@ -92,6 +92,8 @@ type AuthContextValue = {
     email: string,
     password: string
   ) => Promise<{ ok: boolean; error?: string; nextRoute?: string; nextStep?: AuthNextStep }>;
+  /** Local development only: sign in as the seeded demo account (see backend `seed_demo`). */
+  loginAsDemo: () => Promise<{ ok: boolean; error?: string; nextRoute?: string; nextStep?: AuthNextStep }>;
   signUp: (data: SignUpData) => Promise<{ ok: boolean; error?: string; requiresVerification?: boolean }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<Pick<User, "name" | "tier">>) => Promise<{ ok: boolean; error?: string }>;
@@ -278,7 +280,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         nextRoute: routeForNextStep(resolvedNextStep),
       } satisfies RefreshSessionResult;
     } catch (e) {
-      if (e instanceof ApiError && e.status === 401) {
+      // DRF session auth answers anonymous requests with 403 (no WWW-Authenticate), not 401.
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
         flushSync(() => {
           applyMe(null);
         });
@@ -347,6 +350,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         await refreshSession();
+      } catch {
+        // Backend unreachable or erroring: stay signed out rather than surface an unhandled rejection.
       } finally {
         if (mounted) setAuthLoading(false);
       }
@@ -367,15 +372,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, refreshMfa]);
 
-  const login = React.useCallback(
-    async (email: string, password: string) => {
+  const signInWith = React.useCallback(
+    async (path: string, body: Record<string, string>, emailForAudit: string) => {
       try {
-        await apiRequest<MeResponse>("/api/auth/login/", {
+        await apiRequest<MeResponse>(path, {
           method: "POST",
-          body: JSON.stringify({
-            email: email.trim().toLowerCase(),
-            password,
-          }),
+          body: JSON.stringify(body),
         });
         const refreshed = await refreshSession();
         if (!refreshed.hasSession || !refreshed.me) {
@@ -408,12 +410,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           action: "login",
           resource_type: "session",
           error_message: message,
-          metadata: { auth_provider: "django_session", email_domain: email.trim().toLowerCase().split("@")[1] ?? null },
+          metadata: { auth_provider: "django_session", email_domain: emailForAudit.split("@")[1] ?? null },
         });
         return { ok: false as const, error: message };
       }
     },
     [refreshMfa, refreshSession]
+  );
+
+  const login = React.useCallback(
+    (email: string, password: string) => {
+      const normalizedEmail = email.trim().toLowerCase();
+      return signInWith("/api/auth/login/", { email: normalizedEmail, password }, normalizedEmail);
+    },
+    [signInWith]
+  );
+
+  const loginAsDemo = React.useCallback(
+    () => signInWith("/api/auth/demo-login/", {}, ""),
+    [signInWith]
   );
 
   const signUp = React.useCallback(async (data: SignUpData) => {
@@ -571,6 +586,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthReady: !authLoading,
       refreshSession,
       login,
+      loginAsDemo,
       signUp,
       logout,
       updateProfile,
@@ -595,6 +611,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authLoading,
       refreshSession,
       login,
+      loginAsDemo,
       signUp,
       logout,
       updateProfile,

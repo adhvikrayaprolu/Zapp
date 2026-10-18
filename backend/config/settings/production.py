@@ -46,6 +46,7 @@ AUTH_REQUIRE_AAL2 = True
 BANKING_REQUIRE_MFA = True
 BANKING_REQUIRE_FINANCIAL_CONSENT = True
 ALLOW_DEV_HEADER_AUTH = False
+DEMO_LOGIN_ENABLED = False
 
 from config.security.production_validation import validate_production_security
 

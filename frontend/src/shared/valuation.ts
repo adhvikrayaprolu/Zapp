@@ -25,12 +25,14 @@ function clampScore(score: number) {
 }
 
 /**
- * Normalize model-backed value scores into the app's 0-150 display scale.
- * Fractional legacy scores are treated as 0-1 and scaled up before rounding.
+ * Normalize value scores into the app's 0-150 display scale.
+ * Model scores (personal_value_score, value_score) are already 0-150 and are
+ * only rounded/clamped. Feedback scores (feedback_value_score) are 0-1
+ * fractions and are scaled up.
  */
 export function normalizeModelValueScore(score: number | null | undefined) {
   if (score == null || Number.isNaN(score)) return null;
-  const scaled = score <= 1 ? score * OVERFLOW_SCORE_MAX : score * 1.5;
+  const scaled = score <= 1 ? score * OVERFLOW_SCORE_MAX : score;
   return clampScore(scaled);
 }
 

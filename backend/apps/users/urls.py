@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .auth_views import (
     AssuranceView,
     CsrfView,
+    DemoLoginView,
     EmailConfirmCallbackView,
     LoginView,
     LogoutView,
@@ -38,6 +39,7 @@ router.register(r"preferences", UserPreferenceViewSet, basename="preferences")
 urlpatterns = [
     path("auth/csrf/", CsrfView.as_view(), name="auth-csrf"),
     path("auth/login/", LoginView.as_view(), name="auth-login"),
+    path("auth/demo-login/", DemoLoginView.as_view(), name="auth-demo-login"),
     path("auth/signup/", SignupView.as_view(), name="auth-signup"),
     path("auth/logout/", LogoutView.as_view(), name="auth-logout"),
     path("auth/me/", MeView.as_view(), name="auth-me"),

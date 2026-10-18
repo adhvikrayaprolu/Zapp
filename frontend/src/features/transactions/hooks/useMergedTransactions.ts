@@ -117,7 +117,7 @@ export function useMergedTransactions(filters: MergedTransactionsFilters = {}) {
       feedback_value_score: t.feedback_value_score ?? null,
       value_score: t.value_score ?? null,
       value_score_source: t.value_score_source ?? null,
-      personal_value_score: null,
+      personal_value_score: t.personal_value_score ?? null,
       value_score_confidence: t.value_score_confidence ?? null,
       value_score_model_version: null,
       value_score_computed_at: t.value_score_computed_at ?? null,

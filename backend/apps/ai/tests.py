@@ -1542,3 +1542,28 @@ class ConversationStreamingTests(TestCase):
             format="json",
         )
         self.assertEqual(response.status_code, 400)
+
+    @patch("apps.ai.views.requests.post")
+    @override_settings(OPENAI_API_KEY="test-key")
+    def test_stream_accepts_event_stream_accept_header(self, mock_post):
+        # The browser client sends Accept: text/event-stream; this used to 406.
+        response = self.client.post(
+            f"/api/ai/conversations/{self.conversation.id}/messages/stream/",
+            {"content": "hi"},
+            format="json",
+            HTTP_ACCEPT="text/event-stream",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/event-stream")
+        events = _parse_sse(self._consume(response))
+        self.assertEqual(events[-1]["type"], "done")
+
+    def test_stream_validation_error_with_event_stream_accept_is_400(self):
+        response = self.client.post(
+            f"/api/ai/conversations/{self.conversation.id}/messages/stream/",
+            {},
+            format="json",
+            HTTP_ACCEPT="text/event-stream",
+        )
+        self.assertEqual(response.status_code, 400)

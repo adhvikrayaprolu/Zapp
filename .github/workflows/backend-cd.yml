@@ -1,15 +1,12 @@
 name: Backend CD
 
+# Manual-only while nothing is deployed (Render is suspended; the demo runs on
+# localhost). To resume continuous deployment, restore the push trigger:
+#   push:
+#     branches: [main]
+#     paths: [".github/workflows/backend-cd.yml", "backend/apps/**",
+#             "backend/config/**", "backend/manage.py", "backend/requirements.txt"]
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/backend-cd.yml"
-      - "backend/apps/**"
-      - "backend/config/**"
-      - "backend/manage.py"
-      - "backend/requirements.txt"
   workflow_dispatch:
 
 concurrency:
@@ -80,12 +77,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     environment: production
-    if: ${{ secrets.DEPLOY_WEBHOOK_URL != '' }}
+    # `secrets` is not available in job-level `if:` (it made every run fail at
+    # startup), so expose the URL as env and gate the step instead.
+    env:
+      DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
 
     steps:
       - name: Trigger deployment webhook
+        if: ${{ env.DEPLOY_WEBHOOK_URL != '' }}
         run: |
           curl --fail --silent --show-error \
             -X POST \
             -H "Authorization: Bearer ${{ secrets.DEPLOY_WEBHOOK_TOKEN }}" \
-            "${{ secrets.DEPLOY_WEBHOOK_URL }}"
+            "$DEPLOY_WEBHOOK_URL"

@@ -113,3 +113,60 @@ export const ItemValuationsAPI = {
       method: "DELETE",
     }),
 };
+
+export type PurchaseCategory =
+  | "subscriptions"
+  | "groceries"
+  | "eating_out"
+  | "transport"
+  | "shopping"
+  | "bills"
+  | "entertainment"
+  | "health"
+  | "education"
+  | "other";
+
+export const PURCHASE_CATEGORY_OPTIONS: { value: PurchaseCategory; label: string }[] = [
+  { value: "shopping", label: "Shopping" },
+  { value: "eating_out", label: "Eating out" },
+  { value: "entertainment", label: "Entertainment" },
+  { value: "groceries", label: "Groceries" },
+  { value: "subscriptions", label: "Subscriptions" },
+  { value: "health", label: "Health" },
+  { value: "education", label: "Education" },
+  { value: "transport", label: "Transport" },
+  { value: "bills", label: "Bills" },
+  { value: "other", label: "Other" },
+];
+
+export type PurchaseCheckVerdict = "buy" | "wait" | "skip";
+
+export type PurchaseCheckResult = {
+  item: string;
+  amount: string;
+  category: PurchaseCategory;
+  /** 0-150, same scale as value scores. */
+  score: number;
+  verdict: PurchaseCheckVerdict;
+  verdict_label: string;
+  reasons: string[];
+  adjustments: { kind: string; points: number }[];
+  stats: {
+    history_score: number | null;
+    rated_purchases: number;
+    category_purchases: number;
+    spent_this_month: number;
+    typical_month: number | null;
+    lookback_days: number;
+  };
+};
+
+/** Rule-based pre-purchase check computed from the user's own history (no AI/model). */
+export const PurchaseCheckAPI = {
+  check: (body: { item?: string; amount: string; category: PurchaseCategory }) =>
+    apiRequest<PurchaseCheckResult>("/api/purchase-check/", {
+      ...auth,
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+};

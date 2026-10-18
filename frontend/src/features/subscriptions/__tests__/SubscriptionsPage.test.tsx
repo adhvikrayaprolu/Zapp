@@ -110,7 +110,7 @@ describe("SubscriptionsPage", () => {
 
     renderSubscriptions();
 
-    await expectValueScore(150);
+    await expectValueScore(100);
   });
 
   it("normalizes fractional subscription feedback scores before display", async () => {
@@ -156,7 +156,7 @@ describe("SubscriptionsPage", () => {
 
     renderSubscriptions();
 
-    await expectValueScore(150);
+    await expectValueScore(120);
   });
 
   it("still shows subscriptions when valuations fail to load", async () => {

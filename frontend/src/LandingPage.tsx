@@ -268,7 +268,7 @@ function DemoCard() {
         whileHover={reduced ? undefined : { scale: 1.01 }}
         transition={{ duration: 0.35 }}
       >
-        <div className="aspect-video w-full min-h-[360px]">
+        <div className="aspect-video w-full">
           <iframe
             title="Product demo video"
             src={embedSrc ?? toEmbedUrl(fallbackDemoVideoUrl) ?? undefined}
@@ -323,7 +323,7 @@ export default function LandingPage() {
             </h1>
           </motion.div>
 
-          <div className="mt-12 grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
             <WaitlistCard />
             <DemoCard />
           </div>

@@ -130,6 +130,25 @@ function RefreshSessionHarness() {
   );
 }
 
+function DemoLoginHarness() {
+  const { loginAsDemo } = useAuth();
+  const [result, setResult] = React.useState("");
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={async () => {
+          setResult(JSON.stringify(await loginAsDemo()));
+        }}
+      >
+        Demo
+      </button>
+      <output data-testid="demo-result">{result}</output>
+    </>
+  );
+}
+
 function VerifyTotpEnrollmentHarness() {
   const { verifyTotpEnrollment } = useAuth();
 
@@ -338,6 +357,65 @@ describe("AuthProvider", () => {
       );
     });
     expect(JSON.stringify(events)).not.toMatch(/secret12/);
+  });
+
+  it("treats a 403 from /api/auth/me/ (anonymous DRF session) as signed out", async () => {
+    mockApiRequest.mockImplementation(async (path: string, opts?: { method?: string }) => {
+      if (path === "/api/auth/me/" && (!opts?.method || opts.method === "GET")) {
+        throw new ApiError("Authentication credentials were not provided.", 403);
+      }
+      throw new Error(`Unmocked: ${path}`);
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <RefreshSessionHarness />
+      </AuthProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: /refresh session/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("session-result")).toHaveTextContent('"hasSession":false');
+      expect(screen.getByTestId("session-authenticated")).toHaveTextContent("false");
+    });
+  });
+
+  it("signs in through the demo login endpoint", async () => {
+    let meCallCount = 0;
+    mockApiRequest.mockImplementation(async (path: string, opts?: { method?: string }) => {
+      if (path === "/api/auth/me/" && (!opts?.method || opts.method === "GET")) {
+        meCallCount += 1;
+        if (meCallCount === 1) {
+          throw new ApiError("Authentication credentials were not provided.", 403);
+        }
+        return meResponse;
+      }
+      if (path === "/api/auth/demo-login/" && opts?.method === "POST") {
+        return null;
+      }
+      throw new Error(`Unmocked: ${path}`);
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <DemoLoginHarness />
+      </AuthProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: /demo/i }));
+
+    await waitFor(() => {
+      expect(mockApiRequest).toHaveBeenCalledWith("/api/auth/demo-login/", {
+        method: "POST",
+        body: "{}",
+      });
+      expect(screen.getByTestId("demo-result")).toHaveTextContent('"ok":true');
+    });
   });
 
   it("preserves the current session on non-401 refresh failures", async () => {

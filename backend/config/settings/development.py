@@ -21,6 +21,7 @@ BANKING_STEP_UP_REQUIRED = env_bool("BANKING_STEP_UP_REQUIRED", False)
 # explicitly need to debug without MFA locally.
 AUTH_REQUIRE_AAL2 = env_bool("AUTH_REQUIRE_AAL2", True)
 ALLOW_DEV_HEADER_AUTH = True
+DEMO_LOGIN_ENABLED = env_bool("DEMO_LOGIN_ENABLED", True)
 
 # Banking: relaxed defaults for local dev. Set in .env to mirror production when testing Plaid:
 #   BANKING_REQUIRE_MFA=true

@@ -18,21 +18,31 @@ import { formatLocalDateYYYYMMDD, getLocalDateKey, parseDateForDisplay } from "@
 import { deriveTransactionValueScore } from "@/shared/transaction-valuation";
 import { getValuePresentation } from "@/shared/valuation";
 import { ElectricCard } from "../components/ElectricCard";
+import { computeHomeMetrics } from "../utils/homeMetrics";
 import { DashboardGamification } from "@/features/gamification";
 import { COLORS, GLOWS } from "@/shared/theme";
 import { useDashboardFeedback } from "@/features/dashboard/context/DashboardFeedbackContext";
 
+const HOME_TRANSACTION_LIMIT = 300;
+const RECENT_TRANSACTION_COUNT = 6;
+const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
 export function HomePage() {
   const { openFeedback } = useDashboardFeedback();
 
-  const { transactions, loading: txLoading } = useMergedTransactions({ limit: 6 });
+  const { transactions, loading: txLoading } = useMergedTransactions({ limit: HOME_TRANSACTION_LIMIT });
+  const recentTransactions = React.useMemo(
+    () =>
+      [...transactions]
+        .sort((a, b) => parseDateForDisplay(b.occurred_at).getTime() - parseDateForDisplay(a.occurred_at).getTime())
+        .slice(0, RECENT_TRANSACTION_COUNT),
+    [transactions]
+  );
+  const metrics = React.useMemo(() => computeHomeMetrics(transactions), [transactions]);
 
   const recentValueSummary = React.useMemo(() => {
-    const scores = transactions
-      .map((tx) => deriveTransactionValueScore(tx))
-      .filter((score): score is number => score != null);
-
-    if (scores.length === 0) {
+    const average = metrics.averageScore;
+    if (average == null) {
       return {
         average: null as number | null,
         label: "No score yet",
@@ -41,7 +51,6 @@ export function HomePage() {
       };
     }
 
-    const average = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
     const value = getValuePresentation(average);
     return {
       average,
@@ -49,7 +58,15 @@ export function HomePage() {
       accentColor: value.accentColor,
       progress: average / 150,
     };
-  }, [transactions]);
+  }, [metrics.averageScore]);
+
+  const pct = (count: number) => (metrics.scoredCount > 0 ? Math.round((count / metrics.scoredCount) * 100) : 0);
+  const tierBreakdown = [
+    { name: "High Value", value: metrics.highValueCount, color: COLORS.electricGreen },
+    { name: "On Target", value: metrics.onTargetCount, color: COLORS.electricBlue },
+    { name: "Below Target", value: metrics.belowTargetCount, color: COLORS.electricRed },
+  ];
+  const SpendTrendIcon = metrics.spendChangePct != null && metrics.spendChangePct > 0 ? TrendingUp : TrendingDown;
 
   return (
     <div className="relative z-10 space-y-8 pb-32">
@@ -61,12 +78,23 @@ export function HomePage() {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full shadow-[0_0_8px_color-mix(in_srgb,var(--app-accent-blue-soft)_30%,transparent)]" style={{ backgroundColor: "var(--app-accent-blue-soft)" }} />
-                <h2 className="app-eyebrow">Financial Health</h2>
+                <h2 className="app-eyebrow">Spent this month</h2>
               </div>
-              <div className="text-6xl font-black tracking-tight text-[var(--app-color-text-primary)]">$2,450.00</div>
+              <div className="text-6xl font-black tracking-tight text-[var(--app-color-text-primary)]">
+                {currency.format(metrics.monthSpend)}
+              </div>
               <div className="flex items-center gap-3 text-sm font-bold text-[var(--app-color-text-secondary)]">
-                <TrendingUp size={16} className="text-electric-green" style={{ color: COLORS.electricGreen }} />
-                <span>Monthly spending is 12% more intentional</span>
+                {metrics.spendChangePct != null && (
+                  <SpendTrendIcon
+                    size={16}
+                    style={{ color: metrics.spendChangePct > 0 ? COLORS.electricRed : COLORS.electricGreen }}
+                  />
+                )}
+                <span>
+                  {metrics.purchaseCount} {metrics.purchaseCount === 1 ? "purchase" : "purchases"}
+                  {metrics.spendChangePct != null &&
+                    ` · ${Math.abs(metrics.spendChangePct)}% ${metrics.spendChangePct > 0 ? "more" : "less"} than this point last month`}
+                </span>
               </div>
             </div>
             <div className="relative group/meter">
@@ -108,17 +136,23 @@ export function HomePage() {
           </div>
           <div className="h-48 mt-12">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={[
-                { n: "1", v: 400 }, { n: "2", v: 380 }, { n: "3", v: 520 }, { n: "4", v: 450 }, { n: "5", v: 600 }, { n: "6", v: 580 }, { n: "7", v: 720 }
-              ]}>
+              <AreaChart data={metrics.dailySpend}>
                 <defs>
                   <linearGradient id="areaGlow" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={COLORS.electricBlue} stopOpacity={0.2} />
                     <stop offset="100%" stopColor={COLORS.electricBlue} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <Area type="monotone" dataKey="v" stroke={COLORS.electricBlue} strokeWidth={4} fill="url(#areaGlow)" animationDuration={2500} />
-                <Tooltip contentStyle={{ backgroundColor: COLORS.bgCard, border: "1px solid var(--app-color-border-strong)", borderRadius: "20px" }} itemStyle={{ color: COLORS.electricBlue, fontWeight: "900" }} />
+                <Area type="monotone" dataKey="spend" name="Spent" stroke={COLORS.electricBlue} strokeWidth={4} fill="url(#areaGlow)" animationDuration={2500} />
+                <Tooltip
+                  formatter={(value) => currency.format(Number(value))}
+                  labelFormatter={(_, payload) => {
+                    const day = payload?.[0]?.payload?.day as string | undefined;
+                    return day ? parseDateForDisplay(day).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
+                  }}
+                  contentStyle={{ backgroundColor: COLORS.bgCard, border: "1px solid var(--app-color-border-strong)", borderRadius: "20px" }}
+                  itemStyle={{ color: COLORS.electricBlue, fontWeight: "900" }}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -133,12 +167,12 @@ export function HomePage() {
                 <TrendingUp size={28} style={{ color: COLORS.electricCyan }} />
               </div>
               <div>
-                <div className="text-4xl font-black text-[var(--app-color-text-primary)]">12 Days</div>
-                <div className="app-eyebrow">Intentional Streak</div>
+                <div className="text-4xl font-black text-[var(--app-color-text-primary)]">{metrics.highValueCount}</div>
+                <div className="app-eyebrow">High-value buys this month</div>
               </div>
             </div>
             <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-[var(--app-color-surface-inset)]">
-              <motion.div initial={{ width: 0 }} animate={{ width: "85%" }} className="h-full rounded-full" style={{ backgroundColor: "var(--app-accent-cyan-soft)", boxShadow: `0 0 10px ${COLORS.electricCyan}66` }} />
+              <motion.div initial={{ width: 0 }} animate={{ width: `${pct(metrics.highValueCount)}%` }} className="h-full rounded-full" style={{ backgroundColor: "var(--app-accent-cyan-soft)", boxShadow: `0 0 10px ${COLORS.electricCyan}66` }} />
             </div>
           </ElectricCard>
           <ElectricCard className="flex-1 flex flex-col justify-center gap-2" semanticColor={COLORS.electricRed} elevation={1}>
@@ -150,8 +184,8 @@ export function HomePage() {
                 <AlertCircle size={28} style={{ color: COLORS.electricRed }} />
               </div>
               <div>
-                <div className="text-4xl font-black text-[var(--app-color-text-primary)]">3 Alerts</div>
-                <div className="app-eyebrow">Spending Alerts</div>
+                <div className="text-4xl font-black text-[var(--app-color-text-primary)]">{metrics.belowTargetCount}</div>
+                <div className="app-eyebrow">Below-target buys this month</div>
               </div>
             </div>
           </ElectricCard>
@@ -164,40 +198,38 @@ export function HomePage() {
             <IconBadge tone="green" size="sm">
               <Sparkles size={16} style={{ color: COLORS.electricTeal }} />
             </IconBadge>
-            <h3 className="app-card-title">Category Breakdown</h3>
+            <h3 className="app-card-title">Value Breakdown</h3>
           </div>
           <div className="h-64 flex items-center justify-center relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={[
-                    { name: "High Value", value: 65, color: COLORS.electricGreen },
-                    { name: "Regret", value: 15, color: COLORS.electricRed },
-                    { name: "Utility", value: 20, color: COLORS.electricBlue },
-                  ]}
+                  data={tierBreakdown}
                   innerRadius={75}
                   outerRadius={95}
                   paddingAngle={10}
                   dataKey="value"
                   stroke="none"
                 >
-                  {[0, 1, 2].map((i) => (
-                    <Cell key={i} fill={[COLORS.electricGreen, COLORS.electricRed, COLORS.electricBlue][i]} style={{ filter: `drop-shadow(0 0 8px ${[COLORS.electricGreen, COLORS.electricRed, COLORS.electricBlue][i]}40)` }} />
+                  {tierBreakdown.map((slice) => (
+                    <Cell key={slice.name} fill={slice.color} style={{ filter: `drop-shadow(0 0 8px ${slice.color}40)` }} />
                   ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute flex flex-col items-center">
-              <div className="app-eyebrow">Status</div>
-              <div className="text-xl font-black text-[var(--app-color-text-primary)]">Optimized</div>
+              <div className="app-eyebrow">This month</div>
+              <div className="text-xl font-black text-[var(--app-color-text-primary)]">
+                {metrics.scoredCount > 0 ? recentValueSummary.label : "No scores yet"}
+              </div>
             </div>
           </div>
           <div className="mt-12 space-y-3">
             {[
-              { label: "Intentionality", val: 88, color: COLORS.electricGreen },
-              { label: "Regret Risk", val: 12, color: COLORS.electricRed },
-              { label: "Utility Focus", val: 74, color: COLORS.electricBlue },
+              { label: "High value", val: pct(metrics.highValueCount), color: COLORS.electricGreen },
+              { label: "On target", val: pct(metrics.onTargetCount), color: COLORS.electricBlue },
+              { label: "Below target", val: pct(metrics.belowTargetCount), color: COLORS.electricRed },
             ].map((stat, i) => (
               <div
                 key={i}
@@ -222,14 +254,14 @@ export function HomePage() {
   <LoadingState label="Loading transactions..." lines={3} compact />
 )}
 
-{!txLoading && transactions.length === 0 && (
+{!txLoading && recentTransactions.length === 0 && (
   <EmptyState
     title="No purchases logged yet"
     description="Add your first purchase to start tracking your value score."
   />
 )}
 
-{!txLoading && transactions.map((item) => {
+{!txLoading && recentTransactions.map((item) => {
   const score = deriveTransactionValueScore(item);
   const value = getValuePresentation(score);
 

@@ -21,10 +21,14 @@ export function AppLogo({
 }: AppLogoProps) {
   const { mode } = useAppThemeMode();
   const logoSrc = mode === "dark" ? "/zap-logo-white-Photoroom.png" : "/zap-logo-black-Photoroom.png";
+  // Brand rasters live in the untracked publicDir; fall back to the wordmark if one is missing.
+  const [markFailed, setMarkFailed] = React.useState(false);
+  React.useEffect(() => setMarkFailed(false), [logoSrc]);
+  const renderWordmark = showWordmark || markFailed;
 
   return (
     <div className={cn("inline-flex items-center gap-3", className)}>
-      <Image
+      {markFailed ? null : <Image
         alt={showWordmark ? "" : "Zapp logo"}
         aria-hidden={showWordmark}
         className={cn("block shrink-0 object-contain object-center", markClassName)}
@@ -35,9 +39,10 @@ export function AppLogo({
         width={size}
         height={size}
         style={{ width: size, height: size, objectPosition: "36% 56%" }}
-      />
+        onError={() => setMarkFailed(true)}
+      />}
 
-      {showWordmark ? (
+      {renderWordmark ? (
         <span
           className={cn(
             "text-3xl font-black uppercase italic tracking-[-0.06em] text-[var(--app-color-text-primary)] sm:text-4xl",
