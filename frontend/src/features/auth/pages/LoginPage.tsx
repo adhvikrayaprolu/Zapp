@@ -49,8 +49,11 @@ export function buildOAuthRedirectUriAfter(apiBaseUrl: string, locationLike: Pic
   return redirectUrl.toString();
 }
 
+/** Local demo login button; also requires DEMO_LOGIN_ENABLED + DEBUG on the backend. */
+const DEMO_LOGIN_ENABLED = import.meta.env.VITE_DEMO_LOGIN === "true";
+
 export function LoginPage() {
-  const { login, isAuthenticated, isAuthReady, nextRoute } = useAuth();
+  const { login, loginAsDemo, isAuthenticated, isAuthReady, nextRoute } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -67,6 +70,19 @@ export function LoginPage() {
     setLoading(false);
     if (result.ok) {
       toast.success("Welcome back!");
+      navigate(result.nextRoute ?? "/", { replace: true });
+    } else {
+      toast.error(result.error);
+    }
+  };
+
+  const handleDemoSignIn = async () => {
+    if (loading) return;
+    setLoading(true);
+    const result = await loginAsDemo();
+    setLoading(false);
+    if (result.ok) {
+      toast.success("Signed in to the demo account");
       navigate(result.nextRoute ?? "/", { replace: true });
     } else {
       toast.error(result.error);
@@ -129,6 +145,18 @@ export function LoginPage() {
             titleClassName="app-page-title text-[2.5rem] sm:text-[3rem]"
             className="mb-8"
           />
+
+            {DEMO_LOGIN_ENABLED && (
+              <AppButton
+                type="button"
+                size="md"
+                onClick={handleDemoSignIn}
+                disabled={loading}
+                className="mb-3 w-full"
+              >
+                Try the demo account
+              </AppButton>
+            )}
 
             <AppButton
               type="button"

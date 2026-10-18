@@ -8,6 +8,7 @@ import logging
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -60,6 +61,8 @@ from .session_authentication import AuthSessionAuthentication
 from .throttles import LoginRateThrottle, SignupRateThrottle
 
 logger = logging.getLogger(__name__)
+
+User = get_user_model()
 
 
 def _token_fingerprint(token: str) -> str:
@@ -514,6 +517,47 @@ class SignupView(APIView):
         )
 
 
+def demo_login_enabled() -> bool:
+    return bool(settings.DEBUG and getattr(settings, "DEMO_LOGIN_ENABLED", False))
+
+
+class DemoLoginView(APIView):
+    """
+    Local-only: sign in as the seeded demo account without Supabase or MFA.
+
+    Issues the same fully-verified (AAL2) Django session a real password + MFA
+    login would, so the rest of the app behaves identically. Disabled unless
+    DEBUG and DEMO_LOGIN_ENABLED are both on (production forces it off).
+    """
+
+    permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
+
+    def get(self, request):
+        return Response({"enabled": demo_login_enabled()})
+
+    def post(self, request):
+        if not demo_login_enabled():
+            return Response(
+                {"detail": "Demo login is disabled.", "error_code": "demo_login_disabled"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        user = User.objects.filter(username=settings.DEMO_LOGIN_USERNAME).first()
+        if user is None:
+            return Response(
+                {
+                    "detail": "Demo account not found. Run `python manage.py seed_demo` first.",
+                    "error_code": "demo_user_missing",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        session_bits = {"aal": "aal2", "mfa_factor_count": 1, "auth_method": "demo"}
+        issue_django_session(request, user, session_bits, "", None, None)
+        audit_login(request, user, "success", auth_method="demo")
+        state = get_session_auth_state(request) or session_bits
+        return Response(_auth_state_payload(user, state), status=status.HTTP_200_OK)
+
+
 class LogoutView(APIView):
     permission_classes = [AllowAny]
 
@@ -805,6 +849,10 @@ class MfaSnapshotView(APIView):
         refresh_session_tokens_if_needed(request)
         access = get_supabase_access_token(request)
         if not access:
+            state = get_session_auth_state(request) or {}
+            if state.get("auth_method") == "demo" and demo_login_enabled():
+                # Demo sessions have no Supabase user; report the session's own assurance.
+                return Response({"current_level": state.get("aal"), "next_level": None, "factors": []})
             return Response(
                 {"detail": "No Supabase session in server session.", "error_code": "no_upstream_session"},
                 status=status.HTTP_401_UNAUTHORIZED,
