@@ -1,6 +1,6 @@
 import * as React from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { AlertCircle, Camera, Sparkles, Zap } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Zap } from "lucide-react";
 import {
   AppButton,
   AppDialog,
@@ -14,42 +14,87 @@ import {
   AppSelect,
   FormField,
   IconBadge,
+  StatusChip,
   Surface,
 } from "@/shared/components/system";
-import { COLORS } from "@/shared/theme";
+import { ApiError } from "@/api/client";
+import {
+  PURCHASE_CATEGORY_OPTIONS,
+  PurchaseCheckAPI,
+  type PurchaseCategory,
+  type PurchaseCheckResult,
+  type PurchaseCheckVerdict,
+} from "@/api/valuations.api";
+import { getValuePresentation } from "@/shared/valuation";
 
 type BuyAdvisorModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  /** Prefills the item name (e.g. from the Decision Engine search box). */
+  initialItem?: string;
 };
 
-const CATEGORY_OPTIONS = [
-  { value: "lifestyle", label: "Lifestyle" },
-  { value: "utility", label: "Utility" },
-  { value: "experience", label: "Experience" },
-] as const;
+const VERDICT_STYLE: Record<
+  PurchaseCheckVerdict,
+  { tone: "success" | "warning" | "danger"; icon: typeof CheckCircle2; iconTone: "green" | "yellow" | "red" }
+> = {
+  buy: { tone: "success", icon: CheckCircle2, iconTone: "green" },
+  wait: { tone: "warning", icon: Clock, iconTone: "yellow" },
+  skip: { tone: "danger", icon: AlertCircle, iconTone: "red" },
+};
 
-export function BuyAdvisorModal({ isOpen, onClose }: BuyAdvisorModalProps) {
+function parsePrice(value: string): number | null {
+  const parsed = Number.parseFloat(value.replace(/[$,\s]/g, ""));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+export function BuyAdvisorModal({ isOpen, onClose, initialItem = "" }: BuyAdvisorModalProps) {
   const shouldReduceMotion = useReducedMotion();
   const [step, setStep] = React.useState<"input" | "loading" | "result">("input");
-  const [predictedPrice, setPredictedPrice] = React.useState("");
-  const [category, setCategory] = React.useState<string>(CATEGORY_OPTIONS[0].value);
+  const [item, setItem] = React.useState(initialItem);
+  const [price, setPrice] = React.useState("");
+  const [category, setCategory] = React.useState<PurchaseCategory>(PURCHASE_CATEGORY_OPTIONS[0].value);
+  const [error, setError] = React.useState<string | null>(null);
+  const [result, setResult] = React.useState<PurchaseCheckResult | null>(null);
 
   React.useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      setItem(initialItem);
+    } else {
       setStep("input");
+      setPrice("");
+      setError(null);
+      setResult(null);
+    }
+  }, [isOpen, initialItem]);
+
+  const parsedPrice = parsePrice(price);
+
+  const handleAnalyze = async () => {
+    if (parsedPrice == null) {
+      setError("Enter a price greater than $0.");
       return;
     }
-
-    if (step !== "loading") return;
-
-    const timeoutId = window.setTimeout(() => setStep("result"), 2200);
-    return () => window.clearTimeout(timeoutId);
-  }, [isOpen, step]);
-
-  const handleAnalyze = () => {
+    setError(null);
     setStep("loading");
+    try {
+      const response = await PurchaseCheckAPI.check({
+        item: item.trim(),
+        amount: parsedPrice.toFixed(2),
+        category,
+      });
+      setResult(response);
+      setStep("result");
+    } catch (e) {
+      setError(e instanceof ApiError || e instanceof Error ? e.message : "Couldn't check this purchase.");
+      setStep("input");
+    }
   };
+
+  const verdictStyle = result ? VERDICT_STYLE[result.verdict] : null;
+  const scoreColor = result ? getValuePresentation(result.score).accentColor : undefined;
+  const categoryLabel =
+    PURCHASE_CATEGORY_OPTIONS.find((option) => option.value === result?.category)?.label.toLowerCase() ?? "";
 
   return (
     <AppDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -57,97 +102,79 @@ export function BuyAdvisorModal({ isOpen, onClose }: BuyAdvisorModalProps) {
         {step === "input" && (
           <>
             <AppDialogHeader className="gap-4 px-6 pt-6 pr-18 sm:px-8 sm:pt-8 sm:pr-20">
-                <div className="flex items-start gap-4">
-                  <IconBadge tone="cyan" size="lg">
-                    <Zap className="size-5 sm:size-6" />
-                  </IconBadge>
-                  <div className="min-w-0 space-y-3 pr-2">
-                    <AppDialogTitle>Buy Advisor</AppDialogTitle>
-                    <AppDialogDescription>
-                      Tell me what you are thinking about buying and I will compare it
-                    against your recent behavior, satisfaction patterns, and likely
-                    regret risk.
+              <div className="flex items-start gap-4">
+                <IconBadge tone="cyan" size="lg">
+                  <Zap className="size-5 sm:size-6" />
+                </IconBadge>
+                <div className="min-w-0 space-y-3 pr-2">
+                  <AppDialogTitle>Buy Advisor</AppDialogTitle>
+                  <AppDialogDescription>
+                    Tell me what you're thinking about buying and I'll compare it against
+                    your own history in that category: how you rated similar purchases,
+                    your usual monthly spend, and your typical price.
                   </AppDialogDescription>
                 </div>
               </div>
             </AppDialogHeader>
 
             <AppDialogBody className="min-h-0 space-y-5 overflow-y-auto">
-              <Surface
-                variant="inset"
-                padding="md"
-                className="space-y-4 border-[color:color-mix(in_srgb,var(--app-accent-cyan-soft)_20%,transparent)] bg-[color:color-mix(in_srgb,var(--app-accent-cyan-soft)_6%,transparent)]"
+              <form
+                id="buy-advisor-form"
+                className="space-y-4"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleAnalyze();
+                }}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="app-label text-[var(--app-accent-cyan-soft)]">Quick capture</div>
-                    <p className="app-helper max-w-xl">
-                      Start with an estimated price and category, or scan a product
-                      when image intake is wired up.
-                    </p>
-                  </div>
-                  <Sparkles className="size-5 text-[var(--app-accent-cyan-soft)]" aria-hidden="true" />
-                </div>
-
-                <AppButton
-                  type="button"
-                  variant="outline"
-                  size="hero"
-                  className="flex h-auto min-h-52 w-full flex-col items-center justify-center gap-3 rounded-[var(--app-radius-panel)] border-dashed bg-[var(--app-color-surface-base)]/55 px-6 py-8 text-center normal-case tracking-normal hover:border-[color:color-mix(in_srgb,var(--app-accent-cyan-soft)_45%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--app-accent-cyan-soft)_8%,transparent)]"
-                >
-                  <IconBadge tone="neutral" size="md">
-                    <Camera />
-                  </IconBadge>
-                  <div className="space-y-1">
-                    <div className="app-label">Scan product or receipt</div>
-                    <p className="app-helper">
-                      Placeholder entry point for the upcoming capture flow.
-                    </p>
-                  </div>
-                </AppButton>
-              </Surface>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  label="Predicted price"
-                  htmlFor="buy-advisor-price"
-                  helperText="Rough estimates are enough."
-                >
+                <FormField label="What is it?" htmlFor="buy-advisor-item" helperText="Optional, e.g. wireless headphones.">
                   <AppInput
-                    id="buy-advisor-price"
+                    id="buy-advisor-item"
                     size="sm"
-                    inputMode="decimal"
-                    placeholder="0.00"
-                    value={predictedPrice}
-                    onChange={(event) => setPredictedPrice(event.target.value)}
-                    startAdornment={
-                      <span className="text-sm font-black text-[var(--app-color-text-secondary)]">
-                        $
-                      </span>
-                    }
+                    maxLength={120}
+                    placeholder="Item or service"
+                    value={item}
+                    onChange={(event) => setItem(event.target.value)}
                   />
                 </FormField>
 
-                <FormField
-                  label="Target category"
-                  helperText="Used to compare similar spend patterns."
-                >
-                  <AppSelect
-                    value={category}
-                    onValueChange={setCategory}
-                    options={CATEGORY_OPTIONS.map((option) => ({
-                      value: option.value,
-                      label: option.label,
-                    }))}
-                  />
-                </FormField>
-              </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField label="Price" htmlFor="buy-advisor-price" helperText="A rough estimate is enough.">
+                    <AppInput
+                      id="buy-advisor-price"
+                      size="sm"
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      value={price}
+                      onChange={(event) => setPrice(event.target.value)}
+                      aria-invalid={error != null && parsedPrice == null}
+                      startAdornment={
+                        <span className="text-sm font-black text-[var(--app-color-text-secondary)]">$</span>
+                      }
+                    />
+                  </FormField>
+
+                  <FormField label="Category" helperText="Compared with your past purchases here.">
+                    <AppSelect
+                      value={category}
+                      onValueChange={(value) => setCategory(value as PurchaseCategory)}
+                      options={PURCHASE_CATEGORY_OPTIONS}
+                    />
+                  </FormField>
+                </div>
+              </form>
+
+              {error && (
+                <p role="alert" className="text-sm font-semibold text-[var(--app-accent-red-soft)]">
+                  {error}
+                </p>
+              )}
 
               <Surface variant="card" padding="md" className="space-y-3">
                 <div className="app-label">How this works</div>
                 <p className="app-helper">
-                  The advisor weighs recent purchase density, prior satisfaction,
-                  and value-fit patterns before it recommends whether to wait.
+                  A transparent check on your last 180 days of transactions, not a
+                  prediction from an AI model. Every factor that moves the score is
+                  listed with the numbers behind it.
                 </p>
               </Surface>
             </AppDialogBody>
@@ -156,7 +183,7 @@ export function BuyAdvisorModal({ isOpen, onClose }: BuyAdvisorModalProps) {
               <AppButton variant="quiet" onClick={onClose}>
                 Cancel
               </AppButton>
-              <AppButton variant="hero" size="hero" onClick={handleAnalyze}>
+              <AppButton variant="hero" size="hero" type="submit" form="buy-advisor-form">
                 Consult my CFO
               </AppButton>
             </AppDialogFooter>
@@ -166,99 +193,74 @@ export function BuyAdvisorModal({ isOpen, onClose }: BuyAdvisorModalProps) {
         {step === "loading" && (
           <AppDialogBody className="flex min-h-[29rem] flex-col items-center justify-center gap-8 px-8 py-12 text-center">
             <motion.div
-              animate={
-                shouldReduceMotion
-                  ? undefined
-                  : {
-                      scale: [1, 1.03, 1],
-                      opacity: [0.9, 1, 0.9],
-                    }
-              }
+              animate={shouldReduceMotion ? undefined : { scale: [1, 1.03, 1], opacity: [0.9, 1, 0.9] }}
               transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
               className="flex flex-col items-center gap-5"
             >
-                <IconBadge
-                  tone="cyan"
-                  size="lg"
-                  className="size-24 rounded-full border-[color:color-mix(in_srgb,var(--app-accent-cyan-soft)_35%,transparent)] bg-[color:color-mix(in_srgb,var(--app-accent-cyan-soft)_10%,transparent)]"
-                >
-                <motion.div
-                  animate={shouldReduceMotion ? undefined : { rotate: 360 }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                  className="flex items-center justify-center"
-                >
-                  <Zap className="size-10" />
-                </motion.div>
+              <IconBadge
+                tone="cyan"
+                size="lg"
+                className="size-24 rounded-full border-[color:color-mix(in_srgb,var(--app-accent-cyan-soft)_35%,transparent)] bg-[color:color-mix(in_srgb,var(--app-accent-cyan-soft)_10%,transparent)]"
+              >
+                <Zap className="size-10" />
               </IconBadge>
               <div className="space-y-3">
-                <StatusChip tone="info">Analyzing</StatusChip>
-                <h3 className="app-section-title">Analyzing your financial memory</h3>
-                <p className="app-helper max-w-md">
-                  Checking similar purchases, recent velocity, and the odds that a
-                  24-hour delay improves satisfaction.
-                </p>
+                <StatusChip tone="info">Checking</StatusChip>
+                <h3 className="app-section-title">Comparing with your history</h3>
               </div>
             </motion.div>
           </AppDialogBody>
         )}
 
-        {step === "result" && (
+        {step === "result" && result && verdictStyle && (
           <>
             <AppDialogHeader className="gap-4 px-8 pt-8 pr-20 text-center sm:text-center">
-              <StatusChip tone="warning" className="mx-auto">
-                Value fit flagged
+              <StatusChip tone={verdictStyle.tone} className="mx-auto">
+                {result.verdict_label}
               </StatusChip>
               <div className="space-y-3">
-                <div
-                  className="text-7xl font-black tracking-tight sm:text-8xl"
-                    style={{ color: "var(--app-accent-red-soft)" }}
-                >
-                  72
+                <div className="text-7xl font-black tracking-tight sm:text-8xl" style={{ color: scoreColor }}>
+                  {result.score}
                 </div>
-                <AppDialogTitle className="text-center">Personalized Value Fit</AppDialogTitle>
+                <AppDialogTitle className="text-center">
+                  {result.item ? `Value fit for ${result.item}` : "Value fit"}
+                </AppDialogTitle>
                 <AppDialogDescription className="mx-auto max-w-xl text-center">
-                  This purchase is not a hard no. It is a moderate-risk yes that
-                  looks stronger if you slow the decision down.
+                  ${result.amount} in {categoryLabel}, on the same 0-150 scale as your value scores
+                  (about 100 means a good match).
                 </AppDialogDescription>
               </div>
             </AppDialogHeader>
 
             <AppDialogBody className="space-y-6">
-              <Surface
-                variant="inset"
-                padding="lg"
-                className="space-y-4 border-[color:color-mix(in_srgb,var(--app-accent-red-soft)_25%,transparent)] bg-[color:color-mix(in_srgb,var(--app-accent-red-soft)_8%,transparent)]"
-              >
+              <Surface variant="inset" padding="lg" className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <IconBadge tone="red" size="sm">
-                    <AlertCircle />
+                  <IconBadge tone={verdictStyle.iconTone} size="sm">
+                    <verdictStyle.icon />
                   </IconBadge>
-                  <div>
-                    <div className="app-label text-[var(--app-accent-red-soft)]">Recommendation</div>
-                    <h3 className="app-card-title text-[var(--app-color-text-primary)]">
-                      Delay recommended
-                    </h3>
-                  </div>
+                  <div className="app-label">Why</div>
                 </div>
-                <p className="app-helper">
-                  Your recent history shows three comparable purchases this month,
-                  and similar decisions trended toward regret after the initial
-                  excitement wore off. Waiting 24 hours is likely to improve the
-                  outcome.
-                </p>
+                <ul className="space-y-2">
+                  {result.reasons.map((reason) => (
+                    <li key={reason} className="app-helper flex gap-2">
+                      <span aria-hidden="true">•</span>
+                      <span>{reason}</span>
+                    </li>
+                  ))}
+                </ul>
               </Surface>
 
-              <div className="grid gap-3 md:grid-cols-3">
-                <AppButton variant="quiet" size="lg" onClick={onClose}>
-                  Skip
+              <p className="app-helper text-center text-xs">
+                Based only on your own transactions. General guidance, not financial advice.
+              </p>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <AppButton variant="quiet" size="lg" onClick={() => setStep("input")}>
+                  Check another
                 </AppButton>
-                <AppButton
-                  variant="danger"
-                  size="lg"
-                >
-                  Delay 24h
+                <AppButton size="lg" onClick={onClose}>
+                  Done
                 </AppButton>
-                <AppButton size="lg">Buy now</AppButton>
               </div>
             </AppDialogBody>
           </>

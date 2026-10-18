@@ -1,7 +1,7 @@
 import * as React from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Routes, Route, NavLink, useLocation, Navigate } from "react-router-dom";
-import { Home, CreditCard, BarChart2, Search, User, Camera, List, Users } from "lucide-react";
+import { Home, CreditCard, BarChart2, Search, User, ShoppingBag, List, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { useAuth } from "@/features/auth";
@@ -265,11 +265,13 @@ export function DashboardLayout() {
       <div className="fixed bottom-10 left-10 z-[100]">
         <AppButton
           onClick={() => setIsBuyAdvisorOpen(true)}
+          aria-label="Open Buy Advisor"
+          title="Buy Advisor: check a purchase before you buy"
           variant="floating"
           size="icon"
           className="h-14 w-14 rounded-full shadow-2xl"
         >
-          <Camera size={24} />
+          <ShoppingBag size={24} />
         </AppButton>
       </div>
 
