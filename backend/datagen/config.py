@@ -342,7 +342,9 @@ IMPULSE_COEFFICIENTS = {
 
 REGRET_COEFFICIENTS = {
     "t0": 0.10, "t_impulse": 0.25, "t_amount_ratio": 0.20,
-    "t_need": 0.15, "t_satisfaction": 0.20, "sigma": 0.08,
+    # t_satisfaction applies to (neutral_satisfaction - satisfaction/10): below-neutral
+    # satisfaction raises regret, above-neutral lowers it.
+    "t_need": 0.15, "t_satisfaction": 0.80, "neutral_satisfaction": 0.6, "sigma": 0.08,
 }
 
 RESEARCHED_COEFFICIENTS = {

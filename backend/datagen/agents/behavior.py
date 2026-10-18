@@ -7,6 +7,9 @@ Writes to: transactions_transaction behavioral columns, ai_userfact
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
+from apps.transactions.services.feedback_scoring import derive_feedback_fields
 from datagen.agents.base import BaseAgent
 from datagen.config import IMPULSE_COEFFICIENTS, REGRET_COEFFICIENTS, RESEARCHED_COEFFICIENTS
 from datagen.distributions import clip01, logistic
@@ -78,7 +81,7 @@ class BehaviorAgent(BaseAgent):
                 + rc["t_impulse"] * impulse_score
                 + rc["t_amount_ratio"] * amount_ratio
                 - rc["t_need"] * (1.0 if is_need else 0.0)
-                - rc["t_satisfaction"] * (satisfaction / 10.0)
+                + rc["t_satisfaction"] * (rc["neutral_satisfaction"] - satisfaction / 10.0)
                 + float(rng.normal(0, rc["sigma"]))
             )
             regret_score = clip01(regret_raw)
@@ -135,20 +138,16 @@ class BehaviorAgent(BaseAgent):
             if use_llm_this:
                 llm_reflection_count += 1
 
-            # feedback_value_score (0-1): derived from reflection_text + ratings
-            feedback_value = (
-                (satisfaction / 10.0) * 0.4
-                + (1.0 - regret_score) * 0.4
-                + (repurchase / 100.0) * 0.2
-            )
-            # reflection sentiment: high_regret templates imply lower value
-            if impulse_score > 0.6 and regret_score > 0.5:
-                feedback_value -= 0.08
-            elif regret_score > 0.5:
-                feedback_value -= 0.05
-            elif impulse_score < 0.4 and regret_score < 0.4:
-                feedback_value += 0.05
-            feedback_value_score = clip01(feedback_value + float(rng.normal(0, 0.02)))
+            # feedback_value_score (0-1): computed exactly as the live backend does
+            # from the user's ratings, so synthetic scores match production.
+            feedback_value_score = derive_feedback_fields(
+                SimpleNamespace(
+                    satisfaction_rating=satisfaction,
+                    regret_rating=regret_rating,
+                    repurchase_likelihood=repurchase,
+                    reflection_text=None,
+                )
+            )["feedback_value_score"]
 
             # feedback_confidence: higher when more signals present
             signals = 1  # satisfaction always present

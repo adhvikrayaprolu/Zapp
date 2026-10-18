@@ -20,7 +20,7 @@ from datagen.pipeline import run_pipeline
 User = get_user_model()
 
 DEMO_PREFIX = "demo_"
-DEMO_SEED = 42
+DEMO_SEED = 9  # chosen for a realistic mix of high, on-target and low value purchases
 
 
 class Command(BaseCommand):
