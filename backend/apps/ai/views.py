@@ -19,6 +19,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -2313,6 +2314,25 @@ def _sse_event(event_type: str, data: dict) -> str:
     return f"data: {json.dumps({'type': event_type, **data})}\n\n"
 
 
+class EventStreamRenderer(BaseRenderer):
+    """
+    Lets DRF content negotiation accept ``Accept: text/event-stream``.
+
+    The streaming body itself is a StreamingHttpResponse that bypasses renderers;
+    this only renders the plain DRF error responses (400/404) as JSON so they are
+    not rejected with 406 before the view runs.
+    """
+
+    media_type = "text/event-stream"
+    format = "event-stream"
+    charset = "utf-8"
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if data is None:
+            return b""
+        return json.dumps(data).encode(self.charset)
+
+
 def _parse_turn_request(request):
     """Validate a chat turn request body.
 
@@ -2623,7 +2643,12 @@ class ConversationViewSet(AIViewSetMixin, ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
-    @action(detail=True, methods=["post"], url_path="messages/stream")
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="messages/stream",
+        renderer_classes=[JSONRenderer, EventStreamRenderer],
+    )
     def messages_stream(self, request, pk=None):
         """
         POST /api/ai/conversations/<id>/messages/stream/  body: { "content": "..." }
