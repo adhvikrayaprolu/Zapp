@@ -20,20 +20,34 @@ function writeArtifacts(dir: string, siteUrl: string) {
   }
 }
 
+/** Public origin used for production builds when VITE_SITE_URL is not set. */
+export const DEFAULT_PRODUCTION_SITE_URL = "https://zappai.co";
+
 /**
  * Generate sitemap.xml + robots.txt from the public-routes manifest on every
  * build and dev-server start. Written into `publicDir` so the dev server serves
  * them and the build copies them into the output dir — no manual upkeep, and
  * route changes in routes.public.ts propagate automatically.
+ *
+ * Also fills the `%ZAPP_SITE_URL%` placeholder in index.html (canonical / Open
+ * Graph URLs) from the same origin, so production builds never point at a
+ * loopback host.
  */
 export function sitemapPlugin(options: { publicDir: string; siteUrl?: string }): Plugin {
+  let siteUrl = options.siteUrl ?? "";
   return {
     name: "zapp-sitemap",
+    configResolved(config) {
+      if (!siteUrl && config.command === "build") siteUrl = DEFAULT_PRODUCTION_SITE_URL;
+    },
     buildStart() {
-      writeArtifacts(options.publicDir, options.siteUrl ?? "");
+      writeArtifacts(options.publicDir, siteUrl);
     },
     configureServer() {
-      writeArtifacts(options.publicDir, options.siteUrl ?? "");
+      writeArtifacts(options.publicDir, siteUrl);
+    },
+    transformIndexHtml(html) {
+      return html.replaceAll("%ZAPP_SITE_URL%", normalizeSiteUrl(siteUrl));
     },
   };
 }

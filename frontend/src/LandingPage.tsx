@@ -369,7 +369,7 @@ export default function LandingPage() {
       <footer className="border-t border-[var(--z-border)] px-5 py-10 text-center text-sm text-[var(--z-fg-muted)] md:px-8">
         <p className="text-[var(--z-fg)]">Zapp © 2026</p>
         <p className="mt-1">
-          <span className="font-semibold text-[var(--z-fg)]">Contact:</span> siddhantshankar@zappai.com
+          <span className="font-semibold text-[var(--z-fg)]">Contact:</span> siddhantshankar@zappai.co
         </p>
       </footer>
     </div>
