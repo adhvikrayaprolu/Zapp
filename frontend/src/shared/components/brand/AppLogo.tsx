@@ -21,9 +21,10 @@ export function AppLogo({
 }: AppLogoProps) {
   const { mode } = useAppThemeMode();
   const logoSrc = mode === "dark" ? "/zap-logo-white-Photoroom.png" : "/zap-logo-black-Photoroom.png";
-  // Brand rasters live in the untracked publicDir; fall back to the wordmark if one is missing.
-  const [markFailed, setMarkFailed] = React.useState(false);
-  React.useEffect(() => setMarkFailed(false), [logoSrc]);
+  // Fall back to the wordmark if a brand image is missing. Tracking the failed src
+  // (rather than a reset flag) stays correct when the theme switches the logo.
+  const [failedSrc, setFailedSrc] = React.useState<string | null>(null);
+  const markFailed = failedSrc === logoSrc;
   const renderWordmark = showWordmark || markFailed;
 
   return (
@@ -39,7 +40,7 @@ export function AppLogo({
         width={size}
         height={size}
         style={{ width: size, height: size, objectPosition: "36% 56%" }}
-        onError={() => setMarkFailed(true)}
+        onError={() => setFailedSrc(logoSrc)}
       />}
 
       {renderWordmark ? (

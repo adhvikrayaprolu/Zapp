@@ -11,21 +11,21 @@ Python 3.13 (see `.python-version`).
 python3.13 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env              # set SECRET_KEY and DATABASE_URL at minimum
+cp .env.example .env              # set SECRET_KEY; DATABASE_URL is optional locally
 python manage.py migrate
 python manage.py seed_demo        # deterministic demo account for the "Try the demo account" button
 python manage.py runserver 127.0.0.1:8000
 ```
 
-`manage.py` defaults to `config.settings.development`. For SQLite, use an absolute path,
-e.g. `DATABASE_URL=sqlite:////abs/path/to/backend/db.sqlite3`; a relative path resolves
-from whatever folder you start Django in. Check it's up with `GET /healthz/`.
+`manage.py` defaults to `config.settings.development`. Without `DATABASE_URL` the API uses
+`backend/db.sqlite3` (relative SQLite paths also resolve from `backend/`); production settings
+require Postgres. Check it's up with `GET /healthz/`.
 
 ## Settings
 
 | Module | Used for |
 | --- | --- |
-| `config.settings.development` | Local work: `DEBUG` on, loopback CORS/CSRF origins, relaxed banking gates, demo login enabled |
+| `config.settings.development` | Local work: `DEBUG` on, `localhost`/`127.0.0.1` origins, relaxed banking gates, demo login enabled |
 | `config.settings.test` | The test suite and CI |
 | `config.settings.production` | Deployments: HTTPS, secure cookies, MFA required, demo login forced off; validated at startup by `config/security/` |
 
@@ -77,6 +77,11 @@ apps/
 - **Auth:** Supabase access and refresh tokens stay in the server-side session; the browser
   only ever gets a Django session cookie. Unsafe requests need the `csrftoken` cookie value in
   `X-CSRFToken`. Full sign-in requires MFA (AAL2) when `AUTH_REQUIRE_AAL2` is on.
+  `GET /api/auth/session/` is a public sign-in probe; profile-derived data requires a fully
+  authenticated session.
+- **ZappBot:** answers spending, subscription, savings and purchase questions from the user's
+  own data (`apps/ai/local_insights.py`); with `OPENAI_API_KEY` set, open-ended questions go
+  to the model with the same financial context, streamed over Server-Sent Events.
 - **Demo login:** `POST /api/auth/demo-login/` issues the same fully verified session for
   `DEMO_LOGIN_USERNAME`, but only when `DEBUG` and `DEMO_LOGIN_ENABLED` are both on.
 - **Value scores:** the ML model lives in the separate
