@@ -189,7 +189,7 @@ reference is [`backend/.env.example`](backend/.env.example).
 
 ```bash
 cd backend && .venv/bin/python manage.py test   # 401 tests
-cd frontend && npm run test:run                  # 184 tests
+cd frontend && npm run typecheck && npm run test:run   # strict TS + 184 tests
 ./scripts/smoke-test.sh                          # end-to-end checks against ./scripts/dev.sh
 ```
 
@@ -197,8 +197,8 @@ The [CI workflow](.github/workflows/ci.yml) runs on every pull request and on `m
 three jobs:
 
 1. **Backend:** Django system checks, migration drift check, and the test suite.
-2. **Frontend:** the test suite and a production build. On `main`, the build is uploaded as an
-   artifact.
+2. **Frontend:** strict TypeScript type check, the test suite, and a production build. On
+   `main`, the build is uploaded as an artifact.
 3. **End-to-end smoke:** runs the quick start above on a clean runner, starts both servers,
    and checks health, demo sign-in, data loading, the purchase check, ZappBot and the
    waitlist, on both `127.0.0.1` and `localhost`.

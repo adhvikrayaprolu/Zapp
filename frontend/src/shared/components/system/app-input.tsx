@@ -9,7 +9,8 @@ const sizeClasses = {
   hero: "h-20 rounded-[var(--app-radius-panel)] px-6 text-xl font-black md:text-3xl",
 } as const;
 
-type AppInputProps = React.ComponentProps<typeof Input> & {
+// Omit the native numeric `size` attribute; ours selects a size variant.
+type AppInputProps = Omit<React.ComponentProps<typeof Input>, "size"> & {
   size?: keyof typeof sizeClasses;
   startAdornment?: React.ReactNode;
   endAdornment?: React.ReactNode;

@@ -57,7 +57,7 @@ vi.mock("sonner", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
-const snap = { factors: [] as { id: string; status: string }[], currentLevel: null as const, nextLevel: null as const };
+const snap = { factors: [] as { id: string; status: string }[], currentLevel: null, nextLevel: null };
 
 describe("useSecureBankConnect", () => {
   beforeEach(() => {

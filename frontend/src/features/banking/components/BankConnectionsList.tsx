@@ -23,7 +23,7 @@ export function BankConnectionsList({
           <BankConnectionCard
             key={conn.id}
             connection={conn}
-            onSync={() => onSync(conn.id)}
+            onSync={() => onSync(String(conn.id))}
             isSyncing={syncingConnectionId === conn.id}
           />
         ))}

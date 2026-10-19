@@ -20,6 +20,7 @@ export type Transaction = {
   value_score?: number | null;
   /** 0-150 model-backed score persisted on the transaction. */
   personal_value_score?: number | null;
+  value_score_computed_at?: string | null;
   value_score_source?: string | null;
   value_score_confidence?: number | null;
 };
