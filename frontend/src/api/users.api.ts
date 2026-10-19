@@ -105,5 +105,6 @@ export const PreferencesAPI = {
 
 /** Local demo login. The backend only enables it in development (DEBUG + DEMO_LOGIN_ENABLED). */
 export const DemoLoginAPI = {
-  status: () => apiRequest<{ enabled: boolean }>("/api/auth/demo-login/"),
+  status: () =>
+    apiRequest<{ enabled: boolean; password_login_configured?: boolean }>("/api/auth/demo-login/"),
 };

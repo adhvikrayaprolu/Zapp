@@ -31,7 +31,7 @@ is worth it **before** you buy, then learns from how you actually feel about wha
   - Signing in requires MFA (AAL2).
   - Sensitive fields are encrypted at rest with Fernet keys that can be rotated.
 - **Production-quality engineering.**
-  - About 585 automated tests: 401 backend and 184 frontend.
+  - About 590 automated tests: 404 backend and 185 frontend.
   - An end-to-end smoke test that runs in CI on every PR.
   - One-command local setup with realistic synthetic data.
 
@@ -88,7 +88,8 @@ computed from your own transactions and scores. Example questions:
 
 ### Sign-in and early access
 
-Email/password or Google sign-in with MFA, plus a one-click demo account for local use.
+Locally, sign-in is one click with the demo account. With Supabase configured, email/password
+and Google sign-in (with MFA) appear as well.
 A mobile-friendly waitlist page collects early-access signups.
 
 | Sign in | Waitlist (mobile) |
@@ -188,8 +189,8 @@ reference is [`backend/.env.example`](backend/.env.example).
 ## Testing and CI
 
 ```bash
-cd backend && .venv/bin/python manage.py test   # 401 tests
-cd frontend && npm run typecheck && npm run test:run   # strict TS + 184 tests
+cd backend && .venv/bin/python manage.py test   # 404 tests
+cd frontend && npm run typecheck && npm run test:run   # strict TS + 185 tests
 ./scripts/smoke-test.sh                          # end-to-end checks against ./scripts/dev.sh
 ```
 

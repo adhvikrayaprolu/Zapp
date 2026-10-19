@@ -71,7 +71,7 @@ describe("transactions.api pagination", () => {
     vi.mocked(apiRequest).mockResolvedValueOnce({ results: [], next: null, previous: null });
     await TransactionsAPI.list({ category: "groceries", direction: "spend", date_from: "2026-01-01" });
     expect(apiRequest).toHaveBeenCalledWith(
-      "/api/transactions/?category=groceries&direction=spend&date_from=2026-01-01",
+      "/api/transactions/?category=groceries&direction=spend&date_from=2026-01-01&page_size=100",
       expect.objectContaining({ requireAuth: true })
     );
   });

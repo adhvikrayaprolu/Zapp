@@ -19,7 +19,13 @@ class DemoLoginTests(TestCase):
     def test_get_reports_enabled(self):
         resp = self.client.get(DEMO_URL)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json(), {"enabled": True})
+        self.assertTrue(resp.json()["enabled"])
+
+    @override_settings(SUPABASE_URL="")
+    def test_get_reports_password_login_availability(self):
+        self.assertFalse(self.client.get(DEMO_URL).json()["password_login_configured"])
+        with self.settings(SUPABASE_URL="https://example.supabase.co"):
+            self.assertTrue(self.client.get(DEMO_URL).json()["password_login_configured"])
 
     def test_post_issues_fully_verified_session(self):
         resp = self.client.post(DEMO_URL)
@@ -33,6 +39,15 @@ class DemoLoginTests(TestCase):
         self.assertEqual(me.status_code, 200)
         self.assertEqual(me.json()["username"], "demo_user_0")
         self.assertFalse(me.json()["mfa_pending"])
+
+    def test_status_checks_do_not_consume_the_login_limit(self):
+        for _ in range(10):
+            self.assertEqual(self.client.get(DEMO_URL).status_code, 200)
+        self.assertEqual(self.client.post(DEMO_URL).status_code, 200)
+
+    def test_sign_in_attempts_are_rate_limited(self):
+        codes = [self.client.post(DEMO_URL).status_code for _ in range(8)]
+        self.assertIn(429, codes)
 
     def test_mfa_snapshot_reports_session_assurance(self):
         self.client.post(DEMO_URL)
@@ -54,7 +69,7 @@ class DemoLoginTests(TestCase):
 
     @override_settings(DEBUG=False)
     def test_disabled_outside_debug(self):
-        self.assertEqual(self.client.get(DEMO_URL).json(), {"enabled": False})
+        self.assertFalse(self.client.get(DEMO_URL).json()["enabled"])
         resp = self.client.post(DEMO_URL)
         self.assertEqual(resp.status_code, 404)
         self.assertEqual(self.client.get("/api/auth/me/").status_code, 403)

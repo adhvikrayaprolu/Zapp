@@ -547,10 +547,19 @@ class DemoLoginView(APIView):
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = [LoginRateThrottle]
+
+    def get_throttles(self):
+        # Only sign-in attempts count against the login limit; the GET status check
+        # runs on every /login page load and must not exhaust it.
+        return [LoginRateThrottle()] if self.request.method == "POST" else super().get_throttles()
 
     def get(self, request):
-        return Response({"enabled": demo_login_enabled()})
+        # Also tells the login page whether Supabase-backed email/Google sign-in is
+        # configured, so it can offer only the options that work in this environment.
+        return Response({
+            "enabled": demo_login_enabled(),
+            "password_login_configured": bool((getattr(settings, "SUPABASE_URL", None) or "").strip()),
+        })
 
     def post(self, request):
         if not demo_login_enabled():
