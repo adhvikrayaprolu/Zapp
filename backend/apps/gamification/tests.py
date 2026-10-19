@@ -544,14 +544,16 @@ class GamificationApiTests(TestCase):
     def test_weekly_review_endpoint_filters_candidates_to_requested_week(self):
         now = timezone.now()
         start_of_week = now.date() - timedelta(days=now.date().weekday())
-        in_scope_date = start_of_week + timedelta(days=1)
+        # The review window is capped at "today"; a fixed weekday offset lands in
+        # the future early in the week (e.g. on a Monday), so use `now` itself.
+        in_scope_date = now.date()
         out_of_scope_date = start_of_week - timedelta(days=2)
         in_scope_transaction = Transaction.objects.create(
             user=self.user,
             amount="25.00",
             currency="USD",
             direction="spend",
-            occurred_at=timezone.make_aware(datetime.combine(in_scope_date, time(hour=12))),
+            occurred_at=now,
             category="shopping",
             payment_channel="card",
         )
