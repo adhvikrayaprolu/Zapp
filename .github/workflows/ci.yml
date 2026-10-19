@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (Django)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      SECRET_KEY: ci-secret-key
+      DATABASE_URL: sqlite:////tmp/zapp-ci.sqlite3
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      OPENAI_API_KEY: ""
+      SUPABASE_URL: https://example.supabase.co
+      SUPABASE_JWT_ISS: https://example.supabase.co/auth/v1
+      SUPABASE_JWT_AUD: authenticated
+      SUPABASE_ANON_KEY: ci-anon-key
+      SUPABASE_JWT_SECRET: ci-jwt-secret
+      PLAID_CLIENT_ID: ci-plaid-client
+      PLAID_SECRET: ci-plaid-secret
+      PLAID_ENV: sandbox
+      PRIVACY_POLICY_URL: https://example.com/privacy
+      PRIVACY_POLICY_VERSION: 1.0.0
+      PRIVACY_POLICY_EFFECTIVE_DATE: 2026-01-01
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: backend/.python-version
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Django system checks
+        run: python manage.py check
+
+      - name: Migrations are up to date
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Tests
+        run: python manage.py test --verbosity 2
+
+  frontend:
+    name: Frontend (React)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      CI: true
+      VITE_API_URL: https://api.zappai.co
+      VITE_SITE_URL: https://zappai.co
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Tests
+        run: npm run test:run
+
+      - name: Production build
+        run: npm run build
+
+      - name: Upload build
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 14
+
+  e2e-smoke:
+    name: End-to-end smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: backend/.python-version
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Runs exactly what the README's quick start tells a new developer to run.
+      - name: Local setup (README quick start)
+        run: PYTHON=python ./scripts/setup-local.sh
+
+      - name: Start API and web app
+        run: |
+          ./scripts/dev.sh > dev-server.log 2>&1 &
+          echo "Started dev servers"
+
+      - name: Smoke test through the web app origin
+        run: ./scripts/smoke-test.sh
+
+      - name: Smoke test on localhost
+        run: BASE_URL=http://localhost:5173 ./scripts/smoke-test.sh
+
+      - name: Server logs
+        if: failure()
+        run: cat dev-server.log
