@@ -113,9 +113,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# Unset DATABASE_URL falls back to backend/db.sqlite3 for local work; production.py
+# rejects SQLite, so deployments must provide a real database URL.
 DATABASES = {
     "default": dj_database_url.config(
-        default=_clean_env_url(os.environ.get("DATABASE_URL")),
+        default=_clean_env_url(os.environ.get("DATABASE_URL")) or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
         ssl_require=True,
     )
@@ -123,6 +125,11 @@ DATABASES = {
 
 if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
     DATABASES["default"].pop("OPTIONS", None)
+    # Resolve relative SQLite paths (sqlite:///db.sqlite3) from backend/, not the
+    # directory the process happened to start in.
+    _sqlite_name = Path(DATABASES["default"]["NAME"])
+    if not _sqlite_name.is_absolute() and str(_sqlite_name) != ":memory:":
+        DATABASES["default"]["NAME"] = str(BASE_DIR / _sqlite_name)
 
 
 # Password validation

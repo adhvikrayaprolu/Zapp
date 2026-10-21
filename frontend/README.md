@@ -6,16 +6,16 @@ one-command local setup (`./scripts/setup-local.sh`).
 
 ## Run it
 
-Node 20+ (see `.nvmrc`). Start the backend first. The app talks to it at `VITE_API_URL`.
+Node 20+ (see `.nvmrc`). Start the backend first, then:
 
 ```bash
 npm ci
-cp .env.example .env.local   # then set VITE_API_URL=http://127.0.0.1:8000 and VITE_DEMO_LOGIN=true
-npm run dev                  # http://127.0.0.1:5173
+npm run dev        # http://localhost:5173
 ```
 
-The dev server binds to `127.0.0.1` so session cookies and OAuth callbacks stay on the same
-loopback host as the API. Open the app at `127.0.0.1`, not `localhost`.
+No env file is needed for development. The app calls its own origin, and the Vite dev server
+proxies `/api` to Django at `http://127.0.0.1:8000` (override with `VITE_DEV_API_PROXY`).
+Session cookies and CSRF therefore stay first-party.
 
 ## Scripts
 
@@ -34,10 +34,10 @@ secrets in them**. See [`.env.example`](.env.example) for the annotated list.
 
 | Variable | Purpose |
 | --- | --- |
-| `VITE_API_URL` | Backend origin, no trailing slash (`http://127.0.0.1:8000` locally) |
-| `VITE_DEMO_LOGIN` | `true` shows **Try the demo account** on `/login` (local only) |
+| `VITE_API_URL` | Backend origin for production builds (`https://…`). Leave unset in development. |
+| `VITE_DEV_API_PROXY` | Where the dev server proxies `/api` (default `http://127.0.0.1:8000`) |
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Public Supabase values for real sign-in |
-| `VITE_SITE_URL` | Public origin used for `sitemap.xml`, `robots.txt` and canonical/OG URLs in builds |
+| `VITE_SITE_URL` | Public origin for `sitemap.xml`, `robots.txt` and canonical/OG URLs (production builds default to `https://zappai.co`) |
 | `VITE_DEMO_VIDEO_URL` | Video embedded on `/waitlist` (Google Drive, YouTube or Vimeo link) |
 
 ## Layout
@@ -60,5 +60,7 @@ private/        Vite publicDir: put brand images here (generated sitemap/robots/
 - **Value scores** use a 0–150 scale (about 100 means a good match). Use
   `normalizeModelValueScore` and `getValuePresentation` in `src/shared/valuation.ts` rather
   than rescaling by hand.
-- **Signed-out 403s:** a `403` from `/api/auth/me/` is how the API reports "not signed
-  in". `AuthContext` treats it as signed out.
+- **Sign-in state:** `AuthContext` checks `GET /api/auth/session/` first and only loads
+  `/api/auth/me/` for signed-in sessions.
+- **Demo account:** **Try the demo account** appears when the backend reports demo login as
+  enabled (development only).

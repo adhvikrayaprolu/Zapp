@@ -82,11 +82,12 @@ export function getValidatedUrlOrThrow(result: ConfiguredUrlValidation): string 
 
 /**
  * Resolves the API base URL for the current environment.
+ *
+ * In development an unset VITE_API_URL means "same origin": the Vite dev server
+ * proxies /api to Django (see vite.config.ts), so cookies and CSRF work no matter
+ * which loopback hostname the app is opened on. Production builds must set an
+ * https:// VITE_API_URL.
  */
 export function resolveApiBaseUrl(): ConfiguredUrlValidation {
-  return resolveConfiguredUrl(
-    import.meta.env.VITE_API_URL,
-    "http://127.0.0.1:8000",
-    validateProductionApiBaseUrl
-  );
+  return resolveConfiguredUrl(import.meta.env.VITE_API_URL, "", validateProductionApiBaseUrl);
 }

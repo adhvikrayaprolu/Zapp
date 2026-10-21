@@ -1,0 +1,33 @@
+name: Bug report
+description: Something in Zapp isn't working as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Sign in with the demo account
+        2. Open …
+        3. …
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Frontend, Backend / API, ZappBot, Buy Advisor / value scores, Banking (Plaid), Setup / tooling, CI/CD]
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Logs, screenshots or environment
+      description: Browser console, server output, OS / browser versions.

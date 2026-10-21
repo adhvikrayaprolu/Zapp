@@ -1,11 +1,16 @@
 {
-  "name": "@figma/my-make-file",
+  "name": "zapp-web",
+  "description": "Zapp web app: personal-finance value scoring before you buy",
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "build": "vite build",
     "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p .",
     "test": "vitest",
     "test:run": "vitest run"
   },
@@ -23,8 +28,10 @@
     "clsx": "2.1.1",
     "lucide-react": "1.23.0",
     "motion": "12.42.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "react-plaid-link": "^4.1.1",
-    "react-router-dom": "^7.18.1",
+    "react-router-dom": "^7.18.4",
     "recharts": "3.9.1",
     "sonner": "2.0.7",
     "tailwind-merge": "3.6.0",
@@ -35,28 +42,15 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^20.19.43",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "6.0.3",
     "jsdom": "^29.1.1",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.5",
     "tailwindcss": "4.3.2",
+    "typescript": "~5.9",
     "vite": "^8.1.2",
-    "vitest": "^4.1.9"
-  },
-  "peerDependencies": {
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
-  },
-  "pnpm": {
-    "overrides": {
-      "vite": "8.1.2"
-    }
+    "vitest": "^4.1.12"
   }
 }

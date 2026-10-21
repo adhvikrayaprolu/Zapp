@@ -266,6 +266,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const refreshSession = React.useCallback(async () => {
+    const signedOut = {
+      hasSession: false,
+      me: null,
+      nextStep: null,
+      postMfaStep: null,
+      nextRoute: "/login",
+    } satisfies RefreshSessionResult;
+
+    // Cheap public probe first so signed-out visits don't hit /me (which rejects
+    // anonymous callers). Any probe failure just falls through to /me.
+    try {
+      const status = await apiRequest<{ authenticated?: boolean }>("/api/auth/session/");
+      if (status?.authenticated === false) {
+        flushSync(() => {
+          applyMe(null);
+        });
+        return signedOut;
+      }
+    } catch {
+      // Older backend or transient error: let /me decide.
+    }
+
     try {
       const me = await apiRequest<MeResponse>("/api/auth/me/", { requireAuth: true });
       flushSync(() => {
@@ -285,13 +307,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         flushSync(() => {
           applyMe(null);
         });
-        return {
-          hasSession: false,
-          me: null,
-          nextStep: null,
-          postMfaStep: null,
-          nextRoute: "/login",
-        } satisfies RefreshSessionResult;
+        return signedOut;
       }
       throw e;
     }

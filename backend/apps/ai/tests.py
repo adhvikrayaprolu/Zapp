@@ -199,7 +199,8 @@ class ConversationMessagesTests(TestCase):
         self.assertIn("intent_detection", assistant_message["metadata_json"])
         self.assertEqual(assistant_message["metadata_json"]["intent_detection"]["intent"], "ask")
         self.assertEqual(assistant_message["metadata_json"]["response_style"], "direct_answer")
-        self.assertIn("question", assistant_message["content"].lower())
+        # Without an LLM the reply is built from the user's own data (their $13.99 subscription).
+        self.assertIn("13.99", assistant_message["content"])
 
         financial_context = assistant_message["metadata_json"]["financial_context"]
         self.assertEqual(financial_context["summary"]["transaction_count"], 1)

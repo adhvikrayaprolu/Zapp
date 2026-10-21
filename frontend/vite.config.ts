@@ -12,8 +12,6 @@ export default defineConfig(({ mode }) => {
   return {
     publicDir: 'private',
     plugins: [
-      // The React and Tailwind plugins are both required for Make, even if
-      // Tailwind is not being actively used – do not remove them
       react(),
       tailwindcss(),
       // Build/dev-only asset generators — skipped under Vitest (mode === 'test')
@@ -37,6 +35,14 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: '127.0.0.1',
+      // When VITE_API_URL is unset the app calls its own origin; forward API traffic
+      // to Django so the session cookie and CSRF token stay first-party.
+      // changeOrigin: false keeps the browser's Host header, so Django's CSRF
+      // origin check matches whichever loopback name the app was opened on.
+      proxy: {
+        '/api': { target: env.VITE_DEV_API_PROXY || 'http://127.0.0.1:8000', changeOrigin: false },
+        '/healthz': { target: env.VITE_DEV_API_PROXY || 'http://127.0.0.1:8000', changeOrigin: false },
+      },
     },
     preview: {
       host: '127.0.0.1',

@@ -121,6 +121,8 @@ try {
 
   await viewport(1440, 900);
   await go("/login");
+  await waitFor(byText("button", "Try the demo account"));
+  await sleep(800);
   await shot("login");
 
   // Sign in through the real demo button.
@@ -180,9 +182,9 @@ try {
   await waitFor(`document.body.innerText.includes("STREAK") && document.querySelector(".recharts-area-curve")`, 60000);
   await sleep(2500);
   await click(`document.querySelector('[aria-label="Open Zapp assistant"]')`);
-  await type('input[placeholder="Ask ZappBot anything..."]', "How much did I spend this month?");
+  await type('input[placeholder="Ask ZappBot anything..."]', "Which subscription gives me the least value?");
   await click(`document.querySelector('button[aria-label="Send message"]') || document.querySelector('input[placeholder="Ask ZappBot anything..."]').closest("form").querySelector('button[type="submit"]')`);
-  await waitFor(`document.body.innerText.includes("Month to date")`, 20000);
+  await waitFor(`document.body.innerText.includes("lowest-value subscription")`, 20000);
   await sleep(1500);
   await shot("zappbot");
 } finally {

@@ -36,6 +36,7 @@ from .models import (
 from .serializers import ConversationSerializer, MessageSerializer, UserFactSerializer
 from .openai_config import get_openai_api_key, get_openai_api_key_issue
 from .intents import INTENT_UPDATE_SATISFACTION, classify_intent
+from .local_insights import build_local_insight_response
 from .purchase_advisor import LOCAL_TO_ADVISOR_CATEGORY, extract_requested_category
 from .authentication import DebugHeaderAuthentication
 from apps.users.models import BudgetStyle, FinancialGoal
@@ -371,9 +372,8 @@ def _format_money(amount: Decimal) -> str:
 
 
 def _monthly_subscription_cost(subscription: Subscription) -> Decimal:
-    multiplier = MONTHLY_SUBSCRIPTION_MULTIPLIERS.get(subscription.billing_cycle)
-    if multiplier is None:
-        return Decimal("0.00")
+    # "other" / unknown cycles count as monthly, matching how the rest of the app normalizes them.
+    multiplier = MONTHLY_SUBSCRIPTION_MULTIPLIERS.get(subscription.billing_cycle, Decimal("1"))
     return subscription.price * multiplier
 
 
@@ -2448,7 +2448,16 @@ def _resolve_assistant_turn(*, convo, request, content, action_payload):
                         recalled_memories=recalled_memories,
                         intent=intent,
                     )
+                elif openai_error_code is None:
+                    # No LLM configured: answer from the user's own data instead of a placeholder.
+                    insight = build_local_insight_response(request.user, content, financial_context)
+                    response_style = _get_response_style_for_intent(intent)
+                    assistant_payload = _build_local_direct_response(insight["assistant_text"])
+                    assistant_payload["response_style"] = response_style
+                    assistant_payload["frontend_hint"] = _get_frontend_hint_for_response_style(response_style)
+                    assistant_payload["insight_topic"] = insight["insight_topic"]
                 else:
+                    # A key is set but unusable: surface the configuration problem to the operator.
                     assistant_payload = build_assistant_placeholder_response(
                         intent,
                         openai_configured=False,

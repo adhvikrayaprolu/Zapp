@@ -6,7 +6,7 @@ DEBUG = True
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 
-ALLOWED_HOSTS = ALLOWED_HOSTS or ["127.0.0.1"]
+ALLOWED_HOSTS = ALLOWED_HOSTS or ["127.0.0.1", "localhost"]
 
 # Banking: relaxed defaults for local dev. Set in .env to mirror production when testing Plaid:
 #   BANKING_REQUIRE_MFA=true
@@ -22,6 +22,10 @@ BANKING_STEP_UP_REQUIRED = env_bool("BANKING_STEP_UP_REQUIRED", False)
 AUTH_REQUIRE_AAL2 = env_bool("AUTH_REQUIRE_AAL2", True)
 ALLOW_DEV_HEADER_AUTH = True
 DEMO_LOGIN_ENABLED = env_bool("DEMO_LOGIN_ENABLED", True)
+# Dev servers double requests (React StrictMode) and get reloaded constantly; keep the
+# general API limits generous locally. Production keeps the base default.
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["anon"] = os.getenv("API_THROTTLE_ANON_RATE") or "300/minute"
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["user"] = os.getenv("API_THROTTLE_USER_RATE") or "600/minute"
 
 # Banking: relaxed defaults for local dev. Set in .env to mirror production when testing Plaid:
 #   BANKING_REQUIRE_MFA=true
@@ -42,7 +46,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:4173",
     "http://127.0.0.1:5173",
     "http://localhost:4173",
-    "http://127.0.0.1:4173",
+    "http://localhost:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = list(CORS_ALLOWED_ORIGINS)

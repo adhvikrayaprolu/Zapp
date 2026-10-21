@@ -413,6 +413,22 @@ class CsrfView(APIView):
         return Response({"detail": "CSRF cookie set"})
 
 
+class SessionStatusView(APIView):
+    """
+    GET: public, cheap "am I signed in?" probe for app bootstrap.
+
+    Lets the frontend skip /api/auth/me/ (which rejects anonymous callers) when
+    there is no session, instead of triggering an error response on every
+    signed-out page load. Exposes nothing beyond a boolean.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = [AuthSessionAuthentication]
+
+    def get(self, request):
+        return Response({"authenticated": bool(request.user and request.user.is_authenticated)})
+
+
 class LoginView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle]
@@ -531,10 +547,19 @@ class DemoLoginView(APIView):
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = [LoginRateThrottle]
+
+    def get_throttles(self):
+        # Only sign-in attempts count against the login limit; the GET status check
+        # runs on every /login page load and must not exhaust it.
+        return [LoginRateThrottle()] if self.request.method == "POST" else super().get_throttles()
 
     def get(self, request):
-        return Response({"enabled": demo_login_enabled()})
+        # Also tells the login page whether Supabase-backed email/Google sign-in is
+        # configured, so it can offer only the options that work in this environment.
+        return Response({
+            "enabled": demo_login_enabled(),
+            "password_login_configured": bool((getattr(settings, "SUPABASE_URL", None) or "").strip()),
+        })
 
     def post(self, request):
         if not demo_login_enabled():

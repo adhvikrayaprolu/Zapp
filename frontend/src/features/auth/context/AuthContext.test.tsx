@@ -383,6 +383,28 @@ describe("AuthProvider", () => {
     });
   });
 
+  it("skips /api/auth/me/ when the session probe reports signed out", async () => {
+    mockApiRequest.mockImplementation(async (path: string) => {
+      if (path === "/api/auth/session/") return { authenticated: false };
+      throw new Error(`Unexpected request: ${path}`);
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <RefreshSessionHarness />
+      </AuthProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: /refresh session/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("session-result")).toHaveTextContent('"hasSession":false');
+    });
+    expect(mockApiRequest).not.toHaveBeenCalledWith("/api/auth/me/", expect.anything());
+  });
+
   it("signs in through the demo login endpoint", async () => {
     let meCallCount = 0;
     mockApiRequest.mockImplementation(async (path: string, opts?: { method?: string }) => {

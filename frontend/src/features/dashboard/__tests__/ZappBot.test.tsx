@@ -18,8 +18,8 @@ vi.mock("@/api/ai.api", () => ({
 
 vi.mock("motion/react", () => {
   const React = require("react") as typeof import("react");
-  const stripMotionProps = <T extends Record<string, unknown>>(props: T) => {
-    const { animate, initial, exit, whileTap, transition, viewport, ...domProps } = props;
+  const stripMotionProps = (props: object) => {
+    const { animate, initial, exit, whileTap, transition, viewport, ...domProps } = props as Record<string, unknown>;
     return domProps;
   };
   return {

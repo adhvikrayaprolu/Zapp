@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import { getApiBaseUrl } from "@/api/client";
+import { DemoLoginAPI } from "@/api/users.api";
 import { AppButton, AppInput, FormField, SectionHeader, Surface } from "@/shared/components/system";
 import { PrivacyPolicyLink } from "@/shared/components/PrivacyPolicyLink";
 import { AppLogo } from "@/shared/components/brand/AppLogo";
@@ -49,15 +50,30 @@ export function buildOAuthRedirectUriAfter(apiBaseUrl: string, locationLike: Pic
   return redirectUrl.toString();
 }
 
-/** Local demo login button; also requires DEMO_LOGIN_ENABLED + DEBUG on the backend. */
-const DEMO_LOGIN_ENABLED = import.meta.env.VITE_DEMO_LOGIN === "true";
-
 export function LoginPage() {
   const { login, loginAsDemo, isAuthenticated, isAuthReady, nextRoute } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+  // Which sign-in options this environment supports (null while loading). The demo
+  // account is development-only; email/Google need Supabase to be configured.
+  const [options, setOptions] = React.useState<{ demo: boolean; password: boolean } | null>(null);
+
+  React.useEffect(() => {
+    let active = true;
+    DemoLoginAPI.status()
+      .then((res) => {
+        if (active) setOptions({ demo: res?.enabled === true, password: res?.password_login_configured !== false });
+      })
+      .catch(() => {
+        if (active) setOptions({ demo: false, password: true });
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  const demoOnly = options?.demo === true && !options.password;
 
   React.useEffect(() => {
     if (isAuthReady && isAuthenticated) navigate(nextRoute, { replace: true });
@@ -141,12 +157,18 @@ export function LoginPage() {
             align="center"
             eyebrow="Welcome back"
             title="Sign in"
-            description="Enter your credentials to continue."
+            description={
+              demoOnly
+                ? "Explore Zapp with a demo account full of sample activity."
+                : "Enter your credentials to continue."
+            }
             titleClassName="app-page-title text-[2.5rem] sm:text-[3rem]"
             className="mb-8"
           />
 
-            {DEMO_LOGIN_ENABLED && (
+            {options === null && <div className="min-h-[18rem]" aria-busy="true" />}
+
+            {options?.demo && (
               <AppButton
                 type="button"
                 size="md"
@@ -158,6 +180,8 @@ export function LoginPage() {
               </AppButton>
             )}
 
+            {options?.password && (
+            <>
             <AppButton
               type="button"
               variant="outline"
@@ -212,6 +236,8 @@ export function LoginPage() {
               Sign up
             </NavLink>
           </p>
+            </>
+            )}
 
           <p className="mt-4 text-center text-xs text-gray-600">
             <PrivacyPolicyLink className="text-gray-500 hover:text-gray-400" />

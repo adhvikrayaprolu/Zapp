@@ -745,7 +745,7 @@ export function SubscriptionsPage() {
     () =>
       subscriptions.map((sub) => ({
         sub,
-        name: sub.merchant_name || merchantMap[sub.merchant]?.name || `Subscription #${sub.id}`,
+        name: sub.merchant_name || (sub.merchant != null ? merchantMap[sub.merchant]?.name : undefined) || `Subscription #${sub.id}`,
         valuations: valuationsBySubscription[sub.id] ?? [],
       })),
     [subscriptions, merchantMap, valuationsBySubscription]

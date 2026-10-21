@@ -20,6 +20,7 @@ export type Transaction = {
   value_score?: number | null;
   /** 0-150 model-backed score persisted on the transaction. */
   personal_value_score?: number | null;
+  value_score_computed_at?: string | null;
   value_score_source?: string | null;
   value_score_confidence?: number | null;
 };
@@ -88,6 +89,9 @@ function toRelativeCursorPath(url: string): string {
   }
 }
 
+/** Matches TransactionCursorPagination.max_page_size on the backend. */
+const FULL_LIST_PAGE_SIZE = 100;
+
 export const TransactionsAPI = {
   recent: (limit = 6) => apiRequest<Transaction[]>(`/api/transactions/?limit=${limit}`, { requireAuth: true }),
   /** Fetch transactions recommended for feedback by the ML pipeline. */
@@ -102,7 +106,9 @@ export const TransactionsAPI = {
   list: async (
     params?: { category?: string; direction?: string; date_from?: string; date_to?: string; limit?: number; signal?: AbortSignal; }
   ): Promise<Transaction[]> => {
-    let path = `/api/transactions/${buildTransactionQuery(params)}`;
+    // Walking the whole timeline: use the server's max page size to keep request count low.
+    const query = params?.limit ? params : { ...params, page_size: FULL_LIST_PAGE_SIZE };
+    let path = `/api/transactions/${buildTransactionQuery(query)}`;
     const all: Transaction[] = [];
     // Guard bounds runaway paging if a backend ever returns a self-referential cursor.
     for (let guard = 0; guard < 10000; guard += 1) {

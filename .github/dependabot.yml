@@ -5,6 +5,9 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      frontend-minor-and-patch:
+        update-types: [minor, patch]
     labels:
       - "dependencies"
       - "frontend"
@@ -14,6 +17,9 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      backend-minor-and-patch:
+        update-types: [minor, patch]
     labels:
       - "dependencies"
       - "backend"
@@ -23,6 +29,9 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]
     labels:
       - "dependencies"
       - "ci"

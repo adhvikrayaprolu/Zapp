@@ -108,7 +108,7 @@ export function TransactionFeedbackModal({
   const handleSubmit = async () => {
     if (!canSubmit || !transaction) return;
 
-    if (!hasSatisfactionRating) {
+    if (!hasSatisfactionRating || form.satisfaction_rating == null) {
       toast.error("Please rate satisfaction from 1 to 10.");
       return;
     }

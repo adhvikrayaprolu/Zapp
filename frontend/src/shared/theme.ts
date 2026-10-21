@@ -53,7 +53,9 @@ export const APP_THEME = {
   },
 } as const;
 
-export type AppTheme = typeof APP_THEME;
+/** Theme shape with literal values widened, so runtime/light overrides can supply any value. */
+type Widen<T> = { [K in keyof T]: T[K] extends string ? string : T[K] extends number ? number : Widen<T[K]> };
+export type AppTheme = Widen<typeof APP_THEME>;
 export type ThemeMode = "light" | "dark";
 type ThemeSectionKey = keyof AppTheme;
 export type ThemeOverrides = {

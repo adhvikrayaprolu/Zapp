@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { LoginPage, buildOAuthRedirectUriAfter } from "../pages/LoginPage";
 import { toast } from "sonner";
+import { DemoLoginAPI } from "@/api/users.api";
 
 const { mockNavigate, mockLogin, mockGetApiBaseUrl } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
@@ -43,6 +44,10 @@ vi.mock("@/api/client", async () => {
   };
 });
 
+vi.mock("@/api/users.api", () => ({
+  DemoLoginAPI: { status: vi.fn().mockResolvedValue({ enabled: false }) },
+}));
+
 vi.mock("@/shared/components/brand/AppLogo", () => ({
   AppLogo: () => <div data-testid="app-logo" />,
 }));
@@ -74,6 +79,37 @@ describe("LoginPage", () => {
     );
   });
 
+  it("offers the demo account only when the backend enables it", async () => {
+    vi.mocked(DemoLoginAPI.status).mockResolvedValueOnce({ enabled: true });
+    const { unmount } = render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>
+    );
+    expect(await screen.findByRole("button", { name: /try the demo account/i })).toBeInTheDocument();
+    unmount();
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(DemoLoginAPI.status).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("button", { name: /try the demo account/i })).not.toBeInTheDocument();
+  });
+
+  it("shows only the demo account when password sign-in isn't configured", async () => {
+    vi.mocked(DemoLoginAPI.status).mockResolvedValueOnce({ enabled: true, password_login_configured: false });
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>
+    );
+    expect(await screen.findByRole("button", { name: /try the demo account/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /continue with google/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Email$/i)).not.toBeInTheDocument();
+  });
+
   it("navigates to the route returned by login", async () => {
     const user = userEvent.setup();
     mockLogin.mockResolvedValue({ ok: true, nextRoute: "/" });
@@ -84,7 +120,7 @@ describe("LoginPage", () => {
       </MemoryRouter>
     );
 
-    await user.type(screen.getByLabelText(/^Email$/i), "user@example.com");
+    await user.type(await screen.findByLabelText(/^Email$/i), "user@example.com");
     await user.type(screen.getByLabelText(/^Password$/i), "secret12");
     await user.click(screen.getByRole("button", { name: /sign in/i }));
 
@@ -105,7 +141,7 @@ describe("LoginPage", () => {
       </MemoryRouter>
     );
 
-    await user.type(screen.getByLabelText(/^Email$/i), "user@example.com");
+    await user.type(await screen.findByLabelText(/^Email$/i), "user@example.com");
     await user.type(screen.getByLabelText(/^Password$/i), "secret12");
     await user.click(screen.getByRole("button", { name: /sign in/i }));
 
@@ -124,7 +160,7 @@ describe("LoginPage", () => {
       </MemoryRouter>
     );
 
-    await user.type(screen.getByLabelText(/^Email$/i), "user@example.com");
+    await user.type(await screen.findByLabelText(/^Email$/i), "user@example.com");
     await user.type(screen.getByLabelText(/^Password$/i), "wrong-password");
     await user.click(screen.getByRole("button", { name: /sign in/i }));
 
@@ -160,7 +196,7 @@ describe("LoginPage", () => {
       </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: /continue with google/i }));
+    await user.click(await screen.findByRole("button", { name: /continue with google/i }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8000/api/auth/oauth/start/", {
@@ -196,7 +232,7 @@ describe("LoginPage", () => {
       </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: /continue with google/i }));
+    await user.click(await screen.findByRole("button", { name: /continue with google/i }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("SUPABASE_OAUTH_REDIRECT_URI is not configured.");
@@ -232,7 +268,7 @@ describe("LoginPage", () => {
       </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: /continue with google/i }));
+    await user.click(await screen.findByRole("button", { name: /continue with google/i }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(

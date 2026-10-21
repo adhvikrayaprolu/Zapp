@@ -1,4 +1,5 @@
 from .base import *
+from django.core.exceptions import ImproperlyConfigured
 
 DEBUG = False
 
@@ -23,6 +24,8 @@ CSRF_TRUSTED_ORIGINS = _csv_env(os.getenv("CSRF_TRUSTED_ORIGINS")) or [
 CORS_ALLOW_CREDENTIALS = True
 
 # Disable server-side cursors for Supabase/PgBouncer transaction pooler
+if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
+    raise ImproperlyConfigured("Production requires DATABASE_URL to point at Postgres, not SQLite.")
 DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
 
 # --- HTTPS / transport security (TLS terminates at load balancer; Django sees forwarded proto) ---
